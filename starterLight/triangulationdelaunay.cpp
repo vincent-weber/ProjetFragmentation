@@ -44,6 +44,15 @@ TriangulationDelaunay::TriangulationDelaunay(std::vector<Point>* tri_ret, std::v
     tri_ret->push_back(p3);
     tri_ret->push_back(p4);
 
+    std::vector<std::vector<float>> mat;
+    std::vector<float> row1; row1.push_back(4); row1.push_back(2); row1.push_back(8); row1.push_back(4);
+    std::vector<float> row2; row2.push_back(1); row2.push_back(4); row2.push_back(7); row2.push_back(9);
+    std::vector<float> row3; row3.push_back(6); row3.push_back(5); row3.push_back(4); row3.push_back(7);
+    std::vector<float> row4; row4.push_back(8); row4.push_back(8); row4.push_back(4); row4.push_back(3);
+    mat.push_back(row1);mat.push_back(row2);mat.push_back(row3);mat.push_back(row4);
+
+    qDebug() << CalcDeterminant(mat);
+
 
     tetraedres.push_front(&bigT);
 
@@ -53,6 +62,12 @@ TriangulationDelaunay::TriangulationDelaunay(std::vector<Point>* tri_ret, std::v
 
 Tetraedre* TriangulationDelaunay::tetra_containing_point_walk(Point* point) {
     //algorithme walk
+    std::vector<Tetraedre*> visited_tetras;
+    for (Tetraedre* tetra : tetraedres) {
+        visited_tetras.push_back(tetra);
+
+    }
+
     return nullptr;
 }
 
@@ -60,5 +75,6 @@ void TriangulationDelaunay::triangulation() {
     while (!remaining_points.empty()) {
         Point* cur_point = remaining_points.top();
         remaining_points.pop();
+        Tetraedre* current_tetra = tetra_containing_point_walk(cur_point);
     }
 }

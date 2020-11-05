@@ -5,8 +5,11 @@
 #include <stack>
 #include <vector>
 #include <forward_list>
+#include <unordered_set>
 #include "point.h"
 #include "tetraedre.h"
+#include "util.h"
+#include <QDebug>
 
 class TriangulationDelaunay
 {
