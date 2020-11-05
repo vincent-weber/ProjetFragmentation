@@ -6,6 +6,11 @@
 #include <OpenMesh/Core/IO/MeshIO.hh>
 #include <OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh>
 
+#include <stack>
+
+#include "point.h"
+#include "triangulationdelaunay.h"
+
 namespace Ui {
 class MainWindow;
 }
@@ -29,6 +34,19 @@ struct MyTraits : public OpenMesh::DefaultTraits
 };
 typedef OpenMesh::TriMesh_ArrayKernelT<MyTraits> MyMesh;
 
+struct BoiteEnglobante {
+    float minX, maxX, minY, maxY, minZ, maxZ;
+
+    BoiteEnglobante(float minX, float maxX, float minY, float maxY, float minZ, float maxZ) {
+        this->minX = minX;
+        this->maxX = maxX;
+        this->minY = minY;
+        this->maxY = maxY;
+        this->minZ = minZ;
+        this->maxZ = maxZ;
+    }
+};
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -40,6 +58,7 @@ public:
 
     void displayMesh(MyMesh *_mesh, bool isTemperatureMap = false, float mapRange = -1);
     void resetAllColorsAndThickness(MyMesh* _mesh);
+    BoiteEnglobante boiteEnglobante(MyMesh *_mesh);
 
 private slots:
     void on_pushButton_chargement_clicked();

@@ -35,11 +35,17 @@ macx: {
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
-    meshviewerwidget.cpp
+    meshviewerwidget.cpp \
+    point.cpp \
+    tetraedre.cpp \
+    triangulationdelaunay.cpp
 
 HEADERS += \
         mainwindow.h \
-    meshviewerwidget.h
+    meshviewerwidget.h \
+    point.h \
+    tetraedre.h \
+    triangulationdelaunay.h
 
 FORMS += \
         mainwindow.ui

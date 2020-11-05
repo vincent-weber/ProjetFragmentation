@@ -2,8 +2,51 @@
 #include "ui_mainwindow.h"
 
 
+
+
 /* **** début de la partie boutons et IHM **** */
 
+BoiteEnglobante MainWindow::boiteEnglobante(MyMesh *_mesh) {
+    float minX = 0, maxX = 0, minY = 0, maxY = 0, minZ = 0, maxZ = 0;
+    for (MyMesh::FaceIter curFace = _mesh->faces_begin(); curFace != _mesh->faces_end(); curFace++) {
+        for (MyMesh::FaceVertexIter fv_it=mesh.fv_iter(*curFace); fv_it.is_valid(); ++fv_it) {
+            if(_mesh->point(*fv_it)[0] < minX) minX = _mesh->point(*fv_it)[0];
+            else if(_mesh->point(*fv_it)[0] > maxX) maxX = _mesh->point(*fv_it)[0];
+            if(_mesh->point(*fv_it)[1] < minY) minY = _mesh->point(*fv_it)[1];
+            else if(_mesh->point(*fv_it)[1] > maxY) maxY = _mesh->point(*fv_it)[1];
+            if(_mesh->point(*fv_it)[2] < minZ) minZ = _mesh->point(*fv_it)[2];
+            else if(_mesh->point(*fv_it)[2] > maxZ) maxZ = _mesh->point(*fv_it)[2];
+        }
+    }
+    return BoiteEnglobante(minX, maxX, minY, maxY, minZ, maxZ);
+}
+
+float rand_float_between_two_values(float a, float b) {
+    float r = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+    return (b-a) * r + a;
+}
+
+std::vector<Point> genererPointsDansBoite(MyMesh *_mesh, BoiteEnglobante& boite, int nb_points) {
+
+    std::vector<Point> points;
+    for (int i = 0 ; i < nb_points ; ++i) {
+        float x = rand_float_between_two_values(boite.minX, boite.maxX);
+        float y = rand_float_between_two_values(boite.minY, boite.maxY);
+        float z = rand_float_between_two_values(boite.minZ, boite.maxZ);
+
+        Point p_pile(x,y,z);
+        points.push_back(p_pile);
+
+        MyMesh::Point p;
+        p[0] = x;
+        p[1] = y;
+        p[2] = z;
+        VertexHandle vh = _mesh->add_vertex(p);
+        _mesh->set_color(vh, MyMesh::Color(0, 0, 255));
+        _mesh->data(vh).thickness = 10;
+    }
+    return points;
+}
 
 // exemple pour charger un fichier .obj
 void MainWindow::on_pushButton_chargement_clicked()
@@ -19,6 +62,18 @@ void MainWindow::on_pushButton_chargement_clicked()
     // initialisation des couleurs et épaisseurs (sommets et arêtes) du mesh
     resetAllColorsAndThickness(&mesh);
 
+    BoiteEnglobante boite_englobante = boiteEnglobante(&mesh);
+    std::vector<Point> points = genererPointsDansBoite(&mesh, boite_englobante, 30);
+    std::vector<Point> points_tetra;
+    TriangulationDelaunay td(&points_tetra, points);
+    for (int i = 0 ; i < 4 ; ++i) {
+        MyMesh::Point p; p[0] = points_tetra[i].x; p[1] = points_tetra[i].y; p[2] = points_tetra[i].z;
+        VertexHandle vh = mesh.add_vertex(p);
+        mesh.set_color(vh, MyMesh::Color(0, 255, 0));
+        mesh.data(vh).thickness = 10;
+    }
+
+
     // on affiche le maillage
     displayMesh(&mesh);
 }
@@ -30,6 +85,9 @@ void MainWindow::on_pushButton_generer_clicked()
 
     // on construit une liste de sommets
     MyMesh::VertexHandle sommets[8];
+
+
+
     sommets[0] = mesh.add_vertex(MyMesh::Point(-1, -1,  1));
     sommets[1] = mesh.add_vertex(MyMesh::Point( 1, -1,  1));
     sommets[2] = mesh.add_vertex(MyMesh::Point( 1,  1,  1));

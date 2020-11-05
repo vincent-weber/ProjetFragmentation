@@ -19,7 +19,7 @@ MeshViewerWidget::MeshViewerWidget( QGLFormat& _fmt, QWidget* _parent ) : QGLWid
 void MeshViewerWidget::initializeGL()
 {
     glClearColor(1.0, 1.0, 1.0, 1.0);
-    glEnable( GL_DEPTH_TEST );
+    //glEnable( GL_DEPTH_TEST );
 
     glLoadIdentity();
 
@@ -166,6 +166,9 @@ void MeshViewerWidget::paintGL()
     glMatrixMode( GL_MODELVIEW );
     glLoadMatrixd( modelview_matrix_ );
 
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+
     if(triToDraw != 0)
     {
         glPolygonOffset(1.0, 2);
@@ -195,6 +198,8 @@ void MeshViewerWidget::paintGL()
         glDisableClientState( GL_COLOR_ARRAY );
         glDisableClientState( GL_VERTEX_ARRAY );
     }
+
+    glDisable(GL_BLEND);
 
 
     if(linesToDraw != 0)
