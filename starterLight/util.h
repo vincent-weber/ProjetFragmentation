@@ -6,5 +6,4 @@
 
 int calcDeterminant(std::vector<std::vector<float>> Matrix);
 
-
 #endif // UTIL_H

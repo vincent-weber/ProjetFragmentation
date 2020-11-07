@@ -36,7 +36,7 @@ TriangulationDelaunay::TriangulationDelaunay(std::vector<Point>* tri_ret, std::v
     Point p3(x_box_max, y_box_min, z_box_min);
     Point p4(center_x, y_box_min, z_box_max);
 
-    Tetraedre bigT(&p1, &p2, &p3, &p4);
+    Tetraedre* bigT = new Tetraedre(&p1, &p2, &p3, &p4);
 
     std::vector<Point> points_ret;
     tri_ret->push_back(p1);
@@ -51,10 +51,8 @@ TriangulationDelaunay::TriangulationDelaunay(std::vector<Point>* tri_ret, std::v
     std::vector<float> row4; row4.push_back(8); row4.push_back(8); row4.push_back(4); row4.push_back(3);
     mat.push_back(row1);mat.push_back(row2);mat.push_back(row3);mat.push_back(row4);
 
-    qDebug() << CalcDeterminant(mat);
 
-
-    tetraedres.push_front(&bigT);
+    tetraedres.push_front(bigT);
 
     triangulation();
 
