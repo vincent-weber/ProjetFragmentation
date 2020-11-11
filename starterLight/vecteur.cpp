@@ -13,11 +13,13 @@ Vecteur::Vecteur(float x, float y, float z) {
     this->z = z;
 }
 
+Vecteur::Vecteur() {}
+
 float Vecteur::norm() {
     return sqrt(x*x + y*y + z*z);
 }
 
-float Vecteur::dot_prod(Vecteur v) {
+float Vecteur::dot_product(Vecteur v) {
     return this->x * v.x + this->y * v.y + this->z * v.z;
 }
 

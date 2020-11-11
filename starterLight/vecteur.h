@@ -13,9 +13,14 @@ public:
 
     Vecteur(Point p1, Point p2);
     Vecteur(float x, float y, float z);
+    Vecteur();
     float norm();
     float dot_product(Vecteur v);
     Vecteur cross_product(Vecteur v);
+
+    Vecteur operator -() {
+        return Vecteur(-x, -y, -z);
+    }
 };
 
 #endif // VECTEUR_H

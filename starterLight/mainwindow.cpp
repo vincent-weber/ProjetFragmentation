@@ -62,6 +62,24 @@ void MainWindow::on_pushButton_chargement_clicked()
     // initialisation des couleurs et épaisseurs (sommets et arêtes) du mesh
     resetAllColorsAndThickness(&mesh);
 
+    Point p1(1,1,1);
+    Point p2(1,-1,-1);
+    Point p3(-1,1,-1);
+    Point p4(-1,-1,1);
+    /*Point p1(-1,0,0);
+    Point p2(0,0,0);
+    Point p3(0,0,1);
+    Point p4(0,1,0);*/
+    Tetraedre tetra_test(&p1, &p2, &p3, &p4);
+    for (int i = 0 ; i < 4 ; ++i) {
+        qDebug() << "NORMALE " << i << " : " << tetra_test.normales[i].x << " - " << tetra_test.normales[i].y << " - " << tetra_test.normales[i].z;
+    }
+    qDebug() << "INSPHERE CENTER : " << tetra_test.insphere_center.x << " - " << tetra_test.insphere_center.y << " - " << tetra_test.insphere_center.z;
+    /*NORMALE  0  :  0  -  -1  -  0
+    NORMALE  1  :  1  -  0  -  0
+    NORMALE  2  :  -1  -  1  -  1
+    NORMALE  3  :  0  -  0  -  -1*/
+
     BoiteEnglobante boite_englobante = boiteEnglobante(&mesh);
     std::vector<Point> points = genererPointsDansBoite(&mesh, boite_englobante, 30);
     std::vector<Point> points_tetra;

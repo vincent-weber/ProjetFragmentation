@@ -51,7 +51,6 @@ TriangulationDelaunay::TriangulationDelaunay(std::vector<Point>* tri_ret, std::v
     std::vector<float> row4; row4.push_back(8); row4.push_back(8); row4.push_back(4); row4.push_back(3);
     mat.push_back(row1);mat.push_back(row2);mat.push_back(row3);mat.push_back(row4);
 
-
     tetraedres.push_front(bigT);
 
     triangulation();

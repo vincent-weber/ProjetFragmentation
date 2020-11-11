@@ -2,6 +2,7 @@
 #define TETRAEDRE_H
 
 #include "point.h"
+#include "vecteur.h"
 #include <array>
 
 class Tetraedre
@@ -9,6 +10,8 @@ class Tetraedre
 public:
     std::array<Point*, 4> points;
     std::array<Tetraedre*, 4> tetra_adj;
+    std::array<Vecteur, 4> normales = {};
+
 
     //Pour respecter critere boule vide
     Point circumsphere_center;
