@@ -17,6 +17,7 @@ public:
     float norm();
     float dot_product(Vecteur v);
     Vecteur cross_product(Vecteur v);
+    Vecteur normalize();
 
     Vecteur operator -() {
         return Vecteur(-x, -y, -z);

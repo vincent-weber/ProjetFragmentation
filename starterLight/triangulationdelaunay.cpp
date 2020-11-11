@@ -59,11 +59,61 @@ TriangulationDelaunay::TriangulationDelaunay(std::vector<Point>* tri_ret, std::v
 
 Tetraedre* TriangulationDelaunay::tetra_containing_point_walk(Point* point) {
     //algorithme walk
+    //TODO : boucles infinies = moche, voir ce qu'on fait
+    //TODO : voir ce qu'on fait pour les tetras deja visites
     std::vector<Tetraedre*> visited_tetras;
-    for (Tetraedre* tetra : tetraedres) {
+    Tetraedre* tetra = tetraedres.front();
+    while(true) {
         visited_tetras.push_back(tetra);
+        //check si le point est dans le tetra courant
+        Vecteur v_test(*tetra->points[0], tetra->insphere_center);
+        float dot1 = tetra->normales[0].dot_product(v_test);
+        float dot2 = tetra->normales[1].dot_product(v_test);
+        float dot3 = tetra->normales[2].dot_product(v_test);
+        float dot4 = tetra->normales[3].dot_product(v_test);
+        if (dot1 < 0 && dot2 < 0 && dot3 < 0 && dot4 < 0) {
+            return tetra;
+        }
 
+        //on cherche la face vers laquelle se diriger ensuite
+        Vecteur v(tetra->insphere_center, *point);
+        float max_dot = FLT_MIN;
+        int ind_face = -1;
+        for (int i = 0 ; i < 4 ; ++i) {
+            //je suis quasi sur qu'il faut normaliser la normale
+            float dot = tetra->normales[i].normalize().dot_product(v);
+            if (dot > max_dot) {
+                max_dot = dot;
+                ind_face = i;
+            }
+        }
+
+        //on memorise les points de la face pour laquelle il faut trouver le tetra adjacent
+        Point* p_face_1 = tetra->points[ind_face];
+        Point* p_face_2 = tetra->points[(ind_face+1)%4];
+        Point* p_face_3 = tetra->points[(ind_face+2)%4];
+
+        //on cherche le tetra adjacent par la face trouvee precedemment
+        for (int ind_tetra_adj = 0 ; ind_tetra_adj < 4 ; ++ind_tetra_adj) {
+            if (tetra->tetra_adj[ind_tetra_adj] == nullptr) {
+                continue;
+            }
+            Tetraedre* tetra_adj = tetra->tetra_adj[ind_tetra_adj];
+            int common_points = 0;
+            //si les 3 points de la face appartiennent au triangle adjacent courant, c'est le bon
+            for (int ind_points_tetra = 0 ; ind_points_tetra < 4 ; ++ind_points_tetra) {
+                if (tetra_adj->points[ind_points_tetra] == p_face_1 ||
+                        tetra_adj->points[ind_points_tetra] == p_face_2 ||
+                        tetra_adj->points[ind_points_tetra] == p_face_3) {
+                    ++common_points;
+                }
+            }
+            if (common_points == 3) {
+                tetra = tetra_adj;
+            }
+        }
     }
+
 
     return nullptr;
 }

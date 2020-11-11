@@ -29,3 +29,8 @@ Vecteur Vecteur::cross_product(Vecteur v) {
     float z = this->x * v.y - this->y * v.x;
     return Vecteur(x,y,z);
 }
+
+Vecteur Vecteur::normalize() {
+    float norm = this->norm();
+    return Vecteur (x / norm, y / norm, z / norm);
+}
