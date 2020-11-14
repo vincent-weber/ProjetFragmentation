@@ -62,14 +62,16 @@ void MainWindow::on_pushButton_chargement_clicked()
     // initialisation des couleurs et épaisseurs (sommets et arêtes) du mesh
     resetAllColorsAndThickness(&mesh);
 
-    Point p1(1,1,1);
+    /********** DEBUT PARTIE TEST **********/
+
+    /*Point p1(1,1,1);
     Point p2(1,-1,-1);
     Point p3(-1,1,-1);
-    Point p4(-1,-1,1);
-    /*Point p1(-1,0,0);
+    Point p4(-1,-1,1);*/
+    Point p1(-1,0,0);
     Point p2(0,0,0);
     Point p3(0,0,1);
-    Point p4(0,1,0);*/
+    Point p4(0,1,0);
     Tetraedre tetra_test(&p1, &p2, &p3, &p4);
     for (int i = 0 ; i < 4 ; ++i) {
         qDebug() << "NORMALE " << i << " : " << tetra_test.normales[i].x << " - " << tetra_test.normales[i].y << " - " << tetra_test.normales[i].z;
@@ -79,6 +81,25 @@ void MainWindow::on_pushButton_chargement_clicked()
     NORMALE  1  :  1  -  0  -  0
     NORMALE  2  :  -1  -  1  -  1
     NORMALE  3  :  0  -  0  -  -1*/
+
+    /*MyMesh::Point p_1; p_1[0] = p1.x; p_1[1] = p1.y; p_1[2] = p1.z; VertexHandle vh1 = mesh.add_vertex(p_1);
+    mesh.set_color(vh1, MyMesh::Color(0, 255, 0)); mesh.data(vh1).thickness = 10;
+    MyMesh::Point p_2; p_2[0] = p2.x; p_2[1] = p2.y; p_2[2] = p2.z; VertexHandle vh2 = mesh.add_vertex(p_2);
+    mesh.set_color(vh2, MyMesh::Color(0, 255, 0)); mesh.data(vh2).thickness = 10;
+    MyMesh::Point p_3; p_3[0] = p3.x; p_3[1] = p3.y; p_3[2] = p3.z; VertexHandle vh3 = mesh.add_vertex(p_3);
+    mesh.set_color(vh3, MyMesh::Color(0, 255, 0)); mesh.data(vh3).thickness = 10;
+    MyMesh::Point p_4; p_4[0] = p4.x; p_4[1] = p4.y; p_4[2] = p4.z; VertexHandle vh4 = mesh.add_vertex(p_4);
+    mesh.set_color(vh4, MyMesh::Color(0, 255, 0)); mesh.data(vh4).thickness = 10;
+
+    MyMesh::Point ps; ps[0] = tetra_test.insphere_center.x; ps[1] = tetra_test.insphere_center.y; ps[2] = tetra_test.insphere_center.z;
+    VertexHandle vhs = mesh.add_vertex(ps);
+    mesh.set_color(vhs, MyMesh::Color(0, 0, 255)); mesh.data(vhs).thickness = 10;
+
+    displayMesh(&mesh);
+    return;*/
+
+    /********** FIN PARTIE TEST **********/
+
 
     BoiteEnglobante boite_englobante = boiteEnglobante(&mesh);
     std::vector<Point> points = genererPointsDansBoite(&mesh, boite_englobante, 30);
@@ -90,6 +111,11 @@ void MainWindow::on_pushButton_chargement_clicked()
         mesh.set_color(vh, MyMesh::Color(0, 255, 0));
         mesh.data(vh).thickness = 10;
     }
+    Point ps = td.tetraedres.front()->insphere_center;
+    MyMesh::Point p; p[0] = ps.x; p[1] = ps.y; p[2] = ps.z;
+    VertexHandle vhs = mesh.add_vertex(p);
+    mesh.set_color(vhs, MyMesh::Color(255, 0, 0));
+    mesh.data(vhs).thickness = 10;
 
 
     // on affiche le maillage

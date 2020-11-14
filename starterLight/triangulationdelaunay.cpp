@@ -66,9 +66,14 @@ Tetraedre* TriangulationDelaunay::tetra_containing_point_walk(Point* point) {
     while(true) {
         visited_tetras.push_back(tetra);
         //check si le point est dans le tetra courant
+        //etant donné que tetra->normales[1] est TOUJOURS la normale à la face qui ne contient pas le point tetra->points[0],
+        //le dot product entre v_test et normales[1] sera toujours positif. Alors on créé un v_test2 issu d'un des 3 autres sommets
+        //autre idée si ca marche pas : on fait le dot product entre la normale des faces et le vecteur issu du sommet opposé
+        //aux faces qui va vers le insphere center, et si les 4 dot products sont positifs, on return le tetra.
         Vecteur v_test(*tetra->points[0], tetra->insphere_center);
+        Vecteur v_test2(*tetra->points[1], tetra->insphere_center);
         float dot1 = tetra->normales[0].dot_product(v_test);
-        float dot2 = tetra->normales[1].dot_product(v_test);
+        float dot2 = tetra->normales[1].dot_product(v_test2);
         float dot3 = tetra->normales[2].dot_product(v_test);
         float dot4 = tetra->normales[3].dot_product(v_test);
         if (dot1 < 0 && dot2 < 0 && dot3 < 0 && dot4 < 0) {

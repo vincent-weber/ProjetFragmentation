@@ -18,7 +18,7 @@ public:
     std::stack<Point*> remaining_points;
     std::forward_list<Tetraedre*> tetraedres;
     //scale_factor au moins 50 je dirais
-    float big_tetra_scale_factor = 20.0f;
+    float big_tetra_scale_factor = 10.0f;
 
     //est-ce que l'algo return une liste de points (suite de 4 points = 1 tetraedre) ou de tetraedres ?
     TriangulationDelaunay(std::vector<Point>* tetra_ret, std::vector<Point> points);
