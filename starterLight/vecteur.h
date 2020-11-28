@@ -22,6 +22,10 @@ public:
     Vecteur operator -() {
         return Vecteur(-x, -y, -z);
     }
+
+    Vecteur operator *(float fact) {
+        return Vecteur(x*fact, y*fact, z*fact);
+    }
 };
 
 #endif // VECTEUR_H

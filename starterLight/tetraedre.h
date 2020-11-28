@@ -3,6 +3,8 @@
 
 #include "point.h"
 #include "vecteur.h"
+#include "util.h"
+#include <vector>
 #include <array>
 
 class Tetraedre
@@ -15,6 +17,7 @@ public:
     //normales[2] = normale a la face formée par les points points[2], [3] et [0]
     //normales[3] = normale a la face formée par les points points[3], [0] et [1]
     std::array<Vecteur, 4> normales = {};
+    std::array<bool, 4> orient_faces;
 
     //Pour respecter critere boule vide
     Point circumsphere_center;
@@ -24,6 +27,11 @@ public:
 
     Tetraedre(Point* p1, Point* p2, Point* p3, Point* p4);
     Tetraedre();
+
+    bool contientPoint(Point*);
+    bool isPointInSphere(Point* p);
 };
+
+QDebug operator <<(QDebug os, const Tetraedre& t);
 
 #endif // TETRAEDRE_H

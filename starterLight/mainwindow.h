@@ -59,6 +59,7 @@ public:
     void displayMesh(MyMesh *_mesh, bool isTemperatureMap = false, float mapRange = -1);
     void resetAllColorsAndThickness(MyMesh* _mesh);
     BoiteEnglobante boiteEnglobante(MyMesh *_mesh);
+    VertexHandle* find_vertex(Point& p, std::vector<VertexHandle>& handles);
 
 private slots:
     void on_pushButton_chargement_clicked();

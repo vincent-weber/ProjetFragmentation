@@ -26,15 +26,15 @@ float rand_float_between_two_values(float a, float b) {
     return (b-a) * r + a;
 }
 
-std::vector<Point> genererPointsDansBoite(MyMesh *_mesh, BoiteEnglobante& boite, int nb_points) {
+std::vector<Point*> genererPointsDansBoite(MyMesh *_mesh, BoiteEnglobante& boite, int nb_points) {
 
-    std::vector<Point> points;
+    std::vector<Point*> points;
     for (int i = 0 ; i < nb_points ; ++i) {
         float x = rand_float_between_two_values(boite.minX, boite.maxX);
         float y = rand_float_between_two_values(boite.minY, boite.maxY);
         float z = rand_float_between_two_values(boite.minZ, boite.maxZ);
 
-        Point p_pile(x,y,z);
+        Point* p_pile = new Point(x,y,z);
         points.push_back(p_pile);
 
         MyMesh::Point p;
@@ -46,6 +46,16 @@ std::vector<Point> genererPointsDansBoite(MyMesh *_mesh, BoiteEnglobante& boite,
         _mesh->data(vh).thickness = 10;
     }
     return points;
+}
+
+VertexHandle* MainWindow::find_vertex(Point& p, std::vector<VertexHandle>& handles) {
+    for (VertexHandle& vh : handles) {
+        MyMesh::Point ph = mesh.point(vh);
+        if (p.x == ph[0] && p.y == ph[1] && p.z == ph[2]) {
+            return &vh;
+        }
+    }
+    return nullptr;
 }
 
 // exemple pour charger un fichier .obj
@@ -67,7 +77,7 @@ void MainWindow::on_pushButton_chargement_clicked()
     /*Point p1(1,1,1);
     Point p2(1,-1,-1);
     Point p3(-1,1,-1);
-    Point p4(-1,-1,1);*/
+    Point p4(-1,-1,1);
     Point p1(-1,0,0);
     Point p2(0,0,0);
     Point p3(0,0,1);
@@ -76,7 +86,7 @@ void MainWindow::on_pushButton_chargement_clicked()
     for (int i = 0 ; i < 4 ; ++i) {
         qDebug() << "NORMALE " << i << " : " << tetra_test.normales[i].x << " - " << tetra_test.normales[i].y << " - " << tetra_test.normales[i].z;
     }
-    qDebug() << "INSPHERE CENTER : " << tetra_test.insphere_center.x << " - " << tetra_test.insphere_center.y << " - " << tetra_test.insphere_center.z;
+    qDebug() << "INSPHERE CENTER : " << tetra_test.insphere_center.x << " - " << tetra_test.insphere_center.y << " - " << tetra_test.insphere_center.z;*/
     /*NORMALE  0  :  0  -  -1  -  0
     NORMALE  1  :  1  -  0  -  0
     NORMALE  2  :  -1  -  1  -  1
@@ -98,28 +108,81 @@ void MainWindow::on_pushButton_chargement_clicked()
     displayMesh(&mesh);
     return;*/
 
+    /*Point pb(1, 1, 1);
+    Point pc(1,-1,-1);
+    Point pd(-1,1,-1);
+    Point pe(-1,-1,1);
+    Tetraedre tetra2(&pc, &pb, &pe, &pd);
+    Point ptest(3,0,0);
+    qDebug() << "TEST IS POINT IN SPHERE";
+    qDebug() << tetra2.isPointInSphere(&ptest);
+    return;*/
+
     /********** FIN PARTIE TEST **********/
 
 
     BoiteEnglobante boite_englobante = boiteEnglobante(&mesh);
-    std::vector<Point> points = genererPointsDansBoite(&mesh, boite_englobante, 30);
-    std::vector<Point> points_tetra;
-    TriangulationDelaunay td(&points_tetra, points);
-    for (int i = 0 ; i < 4 ; ++i) {
-        MyMesh::Point p; p[0] = points_tetra[i].x; p[1] = points_tetra[i].y; p[2] = points_tetra[i].z;
-        VertexHandle vh = mesh.add_vertex(p);
-        mesh.set_color(vh, MyMesh::Color(0, 255, 0));
-        mesh.data(vh).thickness = 10;
+    std::vector<Point*> points = genererPointsDansBoite(&mesh, boite_englobante, 30);
+    TriangulationDelaunay td(points);
+
+    return;
+    std::vector<VertexHandle> vertices;
+
+    qDebug() << "POINTS DE BASE";
+    for (unsigned i = 0 ; i < 4 ; ++i) {
+        qDebug() << td.p_tetra_englob[i];
+        MyMesh::Point p; p[0] = td.p_tetra_englob[i]->x; p[1] = td.p_tetra_englob[i]->y; p[2] = td.p_tetra_englob[i]->z;
+        vertices.push_back(mesh.add_vertex(p));
     }
-    Point ps = td.tetraedres.front()->insphere_center;
-    MyMesh::Point p; p[0] = ps.x; p[1] = ps.y; p[2] = ps.z;
-    VertexHandle vhs = mesh.add_vertex(p);
-    mesh.set_color(vhs, MyMesh::Color(255, 0, 0));
-    mesh.data(vhs).thickness = 10;
+
+
+    unsigned i = 0;
+    std::vector<MyMesh> meshes_tetra;
+    std::vector<VertexHandle> handles;
+    for (Tetraedre* tetra : td.tetraedres) {
+        MyMesh mesh_tetra;
+        for (int i = 0 ; i < 4 ; ++i) {
+            Point* p = tetra->points[i];
+            MyMesh::Point ph(p->x, p->y, p->z);
+            VertexHandle vh = mesh_tetra.add_vertex(ph);
+            mesh_tetra.set_color(vh, MyMesh::Color(0, 255, 0)); mesh.data(vh).thickness = 10;
+            handles.push_back(vh);
+        }
+        for (int i = 0 ; i < 4 ; ++i) {
+            bool is_ccw = tetra->orient_faces[i];
+            if (!is_ccw) {
+                mesh_tetra.add_face(handles[(i+1)%4], handles[i], handles[(i+2)%4]);
+            }
+            else {
+                mesh_tetra.add_face(handles[i], handles[(i+1)%4], handles[(i+2)%4]);
+            }
+        }
+        ++i;
+        try
+          {
+            std::string filename("./tetra" + std::to_string(i) + ".obj");
+            if ( !OpenMesh::IO::write_mesh(mesh_tetra, filename) )
+            {
+              qDebug() << "Cannot write mesh to file 'output.off'";
+              return;
+            }
+          }
+          catch( std::exception& x )
+          {
+            qDebug() << x.what();
+            return;
+          }
+
+        meshes_tetra.push_back(mesh_tetra);
+        handles.clear();
+    }
+    for (MyMesh& mesh_t : meshes_tetra) {
+        displayMesh(&mesh_t);
+    }
 
 
     // on affiche le maillage
-    displayMesh(&mesh);
+    //displayMesh(&mesh);
 }
 
 // exemple pour construire un mesh face par face

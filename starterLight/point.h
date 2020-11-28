@@ -1,6 +1,7 @@
 #ifndef POINT_H
 #define POINT_H
 
+#include <QDebug>
 
 class Point
 {
@@ -24,5 +25,7 @@ public:
         return Point(x / div, y / div, z / div);
     }
 };
+
+QDebug operator <<(QDebug os, const Point& p);
 
 #endif // POINT_H
