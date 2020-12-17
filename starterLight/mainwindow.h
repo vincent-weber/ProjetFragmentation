@@ -61,10 +61,11 @@ public:
     BoiteEnglobante boiteEnglobante(MyMesh *_mesh);
     VertexHandle* find_vertex(Point& p, std::vector<VertexHandle>& handles);
 
+    void write_tetras_to_file(std::vector<Tetraedre> tetras, std::string filename_pattern);
+    void tests();
+
 private slots:
     void on_pushButton_chargement_clicked();
-
-    void on_pushButton_generer_clicked();
 
 private:
 

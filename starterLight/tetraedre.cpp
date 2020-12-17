@@ -109,12 +109,16 @@ bool Tetraedre::isPointInSphere(Point* p){
     inSphereMatrix.push_back(mp);
 
     float detInSphere = calcDeterminant(inSphereMatrix);
-    qDebug() << "DETERMINANT IN SPHERE : " <<  detInSphere;
     if(detInSphere > 0)
         return true;
     else
         return false;
 }
+
+bool Tetraedre::write_tetra_to_file(const std::string& filename, Tetraedre* tetra) {
+
+}
+
 
 
 QDebug operator <<(QDebug os, const Tetraedre& t) {

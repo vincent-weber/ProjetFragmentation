@@ -1,6 +1,6 @@
 #include "triangulationdelaunay.h"
 
-TriangulationDelaunay::TriangulationDelaunay(std::vector<Point*>& points)
+TriangulationDelaunay::TriangulationDelaunay(std::vector<Point*>& points, bool detruire_tetra_eglobant)
 {
 
     float min_x = FLT_MAX, min_y = FLT_MAX, min_z = FLT_MAX;
@@ -14,10 +14,6 @@ TriangulationDelaunay::TriangulationDelaunay(std::vector<Point*>& points)
         if (point->z < min_z) min_z = point->z;
         else if (point->z > max_z) max_z = point->z;
     }
-
-    /*for (int i = 0 ; i < points.size() ; ++i) {
-        qDebug() << points[i];
-    }*/
 
     float center_x = (max_x + min_x) / 2;
     float dist_center_x = (max_x - min_x) / 2;
@@ -40,8 +36,6 @@ TriangulationDelaunay::TriangulationDelaunay(std::vector<Point*>& points)
     Point* p3 = new Point(x_box_max, y_box_min, z_box_min);
     Point* p4 = new Point(center_x, y_box_min, z_box_max);
 
-    //qDebug() << p1 << p2 << p3 << p4;
-
     Tetraedre* bigT = new Tetraedre(p1, p2, p3, p4);
     p_tetra_englob[0] = p1;
     p_tetra_englob[1] = p2;
@@ -54,6 +48,28 @@ TriangulationDelaunay::TriangulationDelaunay(std::vector<Point*>& points)
     tetra_count = 1;
 
     triangulation();
+
+    if (detruire_tetra_eglobant)
+        supprimer_tetra_englobant(p1,p2,p3,p4);
+
+}
+
+void TriangulationDelaunay::supprimer_tetra_englobant(Point* p1, Point* p2, Point* p3, Point* p4) {
+    std::vector<Tetraedre*> tetra_a_suppr;
+    for (Tetraedre* triangle : tetraedres) {
+        for (Point* point : triangle->points) {
+            if (point == p1 || point == p2 || point == p3 || point == p4) {
+                tetra_a_suppr.push_back(triangle);
+                break;
+            }
+        }
+    }
+
+    for (Tetraedre* tetra : tetra_a_suppr) {
+        tetraedres.remove(tetra);
+        --tetra_count;
+        qDebug() << "NB TETRAS : " << tetra_count;
+    }
 
 }
 
@@ -95,6 +111,7 @@ Tetraedre* TriangulationDelaunay::tetraedre_adjacent_face(Tetraedre* t, Point* p
 }
 
 std::array<Tetraedre*, 4> TriangulationDelaunay::flip14(Tetraedre *old_tetra, Point* p){
+    qDebug() << "FLIP 14";
     std::array<Tetraedre*, 4> newTetras;
     std::array<Tetraedre*, 4> adj;
     for(int i = 0; i < 4; i++) {
@@ -114,10 +131,12 @@ std::array<Tetraedre*, 4> TriangulationDelaunay::flip14(Tetraedre *old_tetra, Po
     delete old_tetra;
 
     tetra_count += 3;
+    qDebug() << "NB TETRAS : " << tetra_count;
     return newTetras;
 }
 
 std::array<Tetraedre*, 3> TriangulationDelaunay::flip23(std::array<Tetraedre*, 2> old_tetras) {
+    qDebug() << "FLIP 23";
     //on sépare les 5 sommets différents en 2 catégories.
     Point* diff_point1 = nullptr;
     Point* diff_point2 = nullptr;
@@ -169,6 +188,9 @@ std::array<Tetraedre*, 3> TriangulationDelaunay::flip23(std::array<Tetraedre*, 2
                 }
             }
         }
+        if (nouv_tetras_adj.size() != 2) {
+            qDebug() << "ERREUR ADJACENCES FLIP 23";
+        }
         tetras_ret[i]->tetra_adj = {tetras_ret[(i+1)%3], tetras_ret[(i+2)%3], nouv_tetras_adj[0], nouv_tetras_adj[1]};
     }
 
@@ -177,10 +199,12 @@ std::array<Tetraedre*, 3> TriangulationDelaunay::flip23(std::array<Tetraedre*, 2
     tetraedres.push_front(tetras_ret[0]); tetraedres.push_front(tetras_ret[1]); tetraedres.push_front(tetras_ret[2]);
 
     tetra_count += 1;
+    qDebug() << "NB TETRAS : " << tetra_count;
     return tetras_ret;
 }
 
 std::array<Tetraedre*, 2> TriangulationDelaunay::flip32(std::array<Tetraedre*, 3> old_tetras) {
+    qDebug() << "FLIP 32";
     //on sépare les 5 sommets différents en 2 catégories.
     Point* diff_point1 = nullptr;
     Point* diff_point2 = nullptr;
@@ -219,7 +243,7 @@ std::array<Tetraedre*, 2> TriangulationDelaunay::flip32(std::array<Tetraedre*, 3
             Point* p1_face = tetra_courant->points[3]; //point_diff
             Point* p2_face = tetra_courant->points[j];
             Point* p3_face = tetra_courant->points[(j+1)%3];
-            //parcours des 3 tetraedres anciens : k = indince ancien tetraedre
+            //parcours des 3 tetraedres anciens : k = indice ancien tetraedre
             //On cherche l'ancien tetraedre qui contient la face en cours
             for (int k = 0 ; k < 3 ; ++k) {
                 if (old_tetras[k]->contientPoint(p1_face) && old_tetras[k]->contientPoint(p2_face) && old_tetras[k]->contientPoint(p3_face)) {
@@ -231,6 +255,9 @@ std::array<Tetraedre*, 2> TriangulationDelaunay::flip32(std::array<Tetraedre*, 3
                 }
             }
         }
+        if (nouv_tetras_adj.size() != 3) {
+            qDebug() << "ERREUR ADJACENCES FLIP 32";
+        }
         tetras_ret[i]->tetra_adj = {tetras_ret[(i+1)%2], nouv_tetras_adj[0], nouv_tetras_adj[1], nouv_tetras_adj[2]};
     }
 
@@ -239,7 +266,26 @@ std::array<Tetraedre*, 2> TriangulationDelaunay::flip32(std::array<Tetraedre*, 3
     tetraedres.push_front(tetras_ret[0]); tetraedres.push_front(tetras_ret[1]);
 
     tetra_count -= 1;
+    qDebug() << "NB TETRAS : " << tetra_count;
     return tetras_ret;
+}
+
+bool is_tetra_in_vector(Tetraedre* tetra, std::vector<Tetraedre*> vect) {
+    for (Tetraedre* tetra_visited : vect) {
+        if (tetra_visited == tetra) {
+            return true;
+        }
+    }
+    return false;
+}
+
+Tetraedre* TriangulationDelaunay::rand_tetra_not_visited(std::vector<Tetraedre*> visited_tetras) {
+    for (Tetraedre* tetra : tetraedres) {
+        if (!is_tetra_in_vector(tetra, visited_tetras)) {
+            return tetra;
+        }
+    }
+    return nullptr;
 }
 
 Tetraedre* TriangulationDelaunay::tetra_containing_point_walk(Point* point) {
@@ -249,14 +295,20 @@ Tetraedre* TriangulationDelaunay::tetra_containing_point_walk(Point* point) {
     std::vector<Tetraedre*> visited_tetras;
     Tetraedre* tetra = tetraedres.front();
     while(true) {
+        if (is_tetra_in_vector(tetra, visited_tetras)) {
+            tetra = rand_tetra_not_visited(visited_tetras);
+        }
+        if (tetra == nullptr) {
+            qDebug() << "WHAAAT ??";
+        }
         visited_tetras.push_back(tetra);
         //check si le point est dans le tetra courant
         //etant donné que tetra->normales[1] est TOUJOURS la normale à la face qui ne contient pas le point tetra->points[0],
         //le dot product entre v_test et normales[1] sera toujours positif. Alors on créé un v_test2 issu d'un des 3 autres sommets
         //autre idée si ca marche pas : on fait le dot product entre la normale des faces et le vecteur issu du sommet opposé
         //aux faces qui va vers le insphere center, et si les 4 dot products sont positifs, on return le tetra.
-        Vecteur v_test(*tetra->points[0], tetra->insphere_center);
-        Vecteur v_test2(*tetra->points[1], tetra->insphere_center);
+        Vecteur v_test(*tetra->points[0], *point);
+        Vecteur v_test2(*tetra->points[1], *point);
         float dot1 = tetra->normales[0].dot_product(v_test);
         float dot2 = tetra->normales[1].dot_product(v_test2);
         float dot3 = tetra->normales[2].dot_product(v_test);
@@ -277,6 +329,7 @@ Tetraedre* TriangulationDelaunay::tetra_containing_point_walk(Point* point) {
                 ind_face = i;
             }
         }
+        //qDebug() << max_dot;
 
         //on memorise les points de la face pour laquelle il faut trouver le tetra adjacent
         Point* p_face_1 = tetra->points[ind_face];
@@ -284,49 +337,34 @@ Tetraedre* TriangulationDelaunay::tetra_containing_point_walk(Point* point) {
         Point* p_face_3 = tetra->points[(ind_face+2)%4];
 
         //on cherche le tetra adjacent par la face trouvee precedemment
-        for (int ind_tetra_adj = 0 ; ind_tetra_adj < 4 ; ++ind_tetra_adj) {
-            if (tetra->tetra_adj[ind_tetra_adj] == nullptr) {
-                continue;
-            }
-            Tetraedre* tetra_adj = tetra->tetra_adj[ind_tetra_adj];
-            int common_points = 0;
-            if (tetra_adj->contientPoint(p_face_1)) ++common_points;
-            if (tetra_adj->contientPoint(p_face_2)) ++common_points;
-            if (tetra_adj->contientPoint(p_face_3)) ++common_points;
-            //si les 3 points de la face appartiennent au triangle adjacent courant, c'est le bon
-            if (common_points == 3) {
-                tetra = tetra_adj;
-            }
-        }
+        tetra = tetraedre_adjacent_face(tetra, p_face_1, p_face_2, p_face_3);
     }
-
-
     return nullptr;
 }
 
 Tetraedre* tetra_adj_2_points(Tetraedre* t1, Point* p1, Tetraedre* t2, Point* p2) {
-    std::vector<Tetraedre*> adj_t1;
-    std::vector<Tetraedre*> adj_t2;
+
+    Tetraedre* adj_t1 = nullptr;
+    Tetraedre* adj_t2 = nullptr;
     for (int i = 0 ; i < 4 ; ++i) {
-        if (t1->tetra_adj[i] != nullptr && t1->tetra_adj[i]->contientPoint(p1)) {
-            adj_t1.push_back(t1->tetra_adj[i]);
+        if (t1->tetra_adj[i] != nullptr && t1->tetra_adj[i]->contientPoint(p1) && t1->tetra_adj[i]->contientPoint(p2)) {
+            adj_t1 = t1->tetra_adj[i];
         }
-        if (t2->tetra_adj[i] != nullptr && t2->tetra_adj[i]->contientPoint(p2)) {
-            adj_t2.push_back(t2->tetra_adj[i]);
+        if (t2->tetra_adj[i] != nullptr && t2->tetra_adj[i]->contientPoint(p1) && t2->tetra_adj[i]->contientPoint(p2)) {
+            adj_t2 = t2->tetra_adj[i];
         }
     }
 
-    for (int i = 0 ; i < 3 ; ++i) {
-        for (int j = 0 ; j < 3 ; ++j) {
-            if (adj_t1[i] == adj_t2[j]) {
-                return adj_t1[i];
-            }
-        }
+    if (adj_t1 != nullptr && adj_t2 != nullptr && adj_t1 == adj_t2) {
+        return adj_t1;
     }
-    return nullptr;
+    else {
+        return nullptr;
+    }
 }
 
 void TriangulationDelaunay::triangulation() {
+    bool debug1 = false;
     while (!remaining_points.empty()) {
         Point* p = remaining_points.top();
         remaining_points.pop();
@@ -339,14 +377,14 @@ void TriangulationDelaunay::triangulation() {
         }
 
         while (!tetras_to_check.empty()) {
-            Tetraedre* t = tetras_to_check.top();
+            Tetraedre* tetra_to_check = tetras_to_check.top();
             tetras_to_check.pop();
             std::array<Point*, 3> abc = {nullptr, nullptr, nullptr};
             for (int i = 0 ; i < 4 ; ++i) {
-                if (t->points[i] == p) {
-                    abc[0] = t->points[(i+1)%4];
-                    abc[1] = t->points[(i+2)%4];
-                    abc[2] = t->points[(i+3)%4];
+                if (tetra_to_check->points[i] == p) {
+                    abc[0] = tetra_to_check->points[(i+1)%4];
+                    abc[1] = tetra_to_check->points[(i+2)%4];
+                    abc[2] = tetra_to_check->points[(i+3)%4];
                     break;
                 }
             }
@@ -355,7 +393,7 @@ void TriangulationDelaunay::triangulation() {
                 //exit(-1);
             }
 
-            Tetraedre* ta = tetraedre_adjacent_face(t, abc[0], abc[1], abc[2]);
+            Tetraedre* ta = tetraedre_adjacent_face(tetra_to_check, abc[0], abc[1], abc[2]);
             if (ta == nullptr) continue;
             Point* d = nullptr;
             for (Point* pta : ta->points) {
@@ -365,21 +403,32 @@ void TriangulationDelaunay::triangulation() {
                 }
             }
 
-            if (t->isPointInSphere(d)) {
+            if (tetra_to_check->isPointInSphere(d)) {
                 Vecteur v(*p, *d);
                 bool intersect = intersect_droite_triangle(v, *p, *abc[0], *abc[1], *abc[2]);
                 if (intersect) {
-                    std::array<Tetraedre*, 3> tetras3 = flip23({t, ta});
+                    std::array<Tetraedre*, 3> tetras3 = flip23({tetra_to_check, ta});
                     ++flip23count;
                     tetras_to_check.push(tetras3[0]);
                     tetras_to_check.push(tetras3[1]);
                     tetras_to_check.push(tetras3[2]);
                     continue;
                 }
-                Tetraedre* tetra_adj_commun = tetra_adj_2_points(t, p, ta, d);
+                Tetraedre* tetra_adj_commun = tetra_adj_2_points(tetra_to_check, p, ta, d);
+                if (!debug1) {
+                    tetras_debug.push_back(*tetra_to_check);
+                    tetras_debug.push_back(*ta);
+                    if (tetra_adj_commun != nullptr) {
+                        tetras_debug.push_back(*tetra_adj_commun);
+                    }
+                    debug1 = true;
+                    qDebug() << "FLIP 32 DEBUG";
+                }
                 if (!intersect && tetra_adj_commun != nullptr) {
-                    flip32({t, ta, tetra_adj_commun});
+                    std::array<Tetraedre*, 2> tetras2 = flip32({tetra_to_check, ta, tetra_adj_commun});
                     ++flip32count;
+                    tetras_to_check.push(tetras2[0]);
+                    tetras_to_check.push(tetras2[1]);
                 }
             }
         }

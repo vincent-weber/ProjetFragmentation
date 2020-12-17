@@ -1,9 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-
-
-
 /* **** début de la partie boutons et IHM **** */
 
 BoiteEnglobante MainWindow::boiteEnglobante(MyMesh *_mesh) {
@@ -58,6 +55,49 @@ VertexHandle* MainWindow::find_vertex(Point& p, std::vector<VertexHandle>& handl
     return nullptr;
 }
 
+void MainWindow::write_tetras_to_file(std::vector<Tetraedre> tetras, std::string filename_pattern) {
+    unsigned file_number = 0;
+    std::vector<MyMesh> meshes_tetra;
+    std::vector<VertexHandle> handles;
+    for (Tetraedre& tetra : tetras) {
+        MyMesh mesh_tetra;
+        for (int i = 0 ; i < 4 ; ++i) {
+            Point* p = tetra.points[i];
+            MyMesh::Point ph(p->x, p->y, p->z);
+            VertexHandle vh = mesh_tetra.add_vertex(ph);
+            mesh_tetra.set_color(vh, MyMesh::Color(0, 255, 0)); mesh.data(vh).thickness = 10;
+            handles.push_back(vh);
+        }
+        for (int i = 0 ; i < 4 ; ++i) {
+            bool is_ccw = tetra.orient_faces[i];
+            if (!is_ccw) {
+                mesh_tetra.add_face(handles[(i+1)%4], handles[i], handles[(i+2)%4]);
+            }
+            else {
+                mesh_tetra.add_face(handles[i], handles[(i+1)%4], handles[(i+2)%4]);
+            }
+        }
+        ++file_number;
+        try
+          {
+            std::string filename("./" + filename_pattern + std::to_string(file_number) + ".obj");
+            if ( !OpenMesh::IO::write_mesh(mesh_tetra, filename) )
+            {
+              qDebug() << "Cannot write mesh to file 'output.obj'";
+              return;
+            }
+          }
+          catch( std::exception& x )
+          {
+            qDebug() << x.what();
+            return;
+          }
+
+        meshes_tetra.push_back(mesh_tetra);
+        handles.clear();
+    }
+}
+
 // exemple pour charger un fichier .obj
 void MainWindow::on_pushButton_chargement_clicked()
 {
@@ -72,7 +112,25 @@ void MainWindow::on_pushButton_chargement_clicked()
     // initialisation des couleurs et épaisseurs (sommets et arêtes) du mesh
     resetAllColorsAndThickness(&mesh);
 
-    /********** DEBUT PARTIE TEST **********/
+    srand(time(NULL));
+
+    BoiteEnglobante boite_englobante = boiteEnglobante(&mesh);
+    std::vector<Point*> points = genererPointsDansBoite(&mesh, boite_englobante, 4);
+    TriangulationDelaunay td(points, false);
+
+    std::vector<Tetraedre> tetras_td;
+    for (Tetraedre* tetra : td.tetraedres) {
+        tetras_td.push_back(*tetra);
+    }
+
+    write_tetras_to_file(tetras_td, "tetra");
+    write_tetras_to_file(td.tetras_debug, "tetra_debug");
+
+    // on affiche le maillage
+    //displayMesh(&mesh);
+}
+
+void MainWindow::tests() {
 
     /*Point p1(1,1,1);
     Point p2(1,-1,-1);
@@ -117,147 +175,6 @@ void MainWindow::on_pushButton_chargement_clicked()
     qDebug() << "TEST IS POINT IN SPHERE";
     qDebug() << tetra2.isPointInSphere(&ptest);
     return;*/
-
-    /********** FIN PARTIE TEST **********/
-
-
-    BoiteEnglobante boite_englobante = boiteEnglobante(&mesh);
-    std::vector<Point*> points = genererPointsDansBoite(&mesh, boite_englobante, 30);
-    TriangulationDelaunay td(points);
-
-    return;
-    std::vector<VertexHandle> vertices;
-
-    qDebug() << "POINTS DE BASE";
-    for (unsigned i = 0 ; i < 4 ; ++i) {
-        qDebug() << td.p_tetra_englob[i];
-        MyMesh::Point p; p[0] = td.p_tetra_englob[i]->x; p[1] = td.p_tetra_englob[i]->y; p[2] = td.p_tetra_englob[i]->z;
-        vertices.push_back(mesh.add_vertex(p));
-    }
-
-
-    unsigned i = 0;
-    std::vector<MyMesh> meshes_tetra;
-    std::vector<VertexHandle> handles;
-    for (Tetraedre* tetra : td.tetraedres) {
-        MyMesh mesh_tetra;
-        for (int i = 0 ; i < 4 ; ++i) {
-            Point* p = tetra->points[i];
-            MyMesh::Point ph(p->x, p->y, p->z);
-            VertexHandle vh = mesh_tetra.add_vertex(ph);
-            mesh_tetra.set_color(vh, MyMesh::Color(0, 255, 0)); mesh.data(vh).thickness = 10;
-            handles.push_back(vh);
-        }
-        for (int i = 0 ; i < 4 ; ++i) {
-            bool is_ccw = tetra->orient_faces[i];
-            if (!is_ccw) {
-                mesh_tetra.add_face(handles[(i+1)%4], handles[i], handles[(i+2)%4]);
-            }
-            else {
-                mesh_tetra.add_face(handles[i], handles[(i+1)%4], handles[(i+2)%4]);
-            }
-        }
-        ++i;
-        try
-          {
-            std::string filename("./tetra" + std::to_string(i) + ".obj");
-            if ( !OpenMesh::IO::write_mesh(mesh_tetra, filename) )
-            {
-              qDebug() << "Cannot write mesh to file 'output.off'";
-              return;
-            }
-          }
-          catch( std::exception& x )
-          {
-            qDebug() << x.what();
-            return;
-          }
-
-        meshes_tetra.push_back(mesh_tetra);
-        handles.clear();
-    }
-    for (MyMesh& mesh_t : meshes_tetra) {
-        displayMesh(&mesh_t);
-    }
-
-
-    // on affiche le maillage
-    //displayMesh(&mesh);
-}
-
-// exemple pour construire un mesh face par face
-void MainWindow::on_pushButton_generer_clicked()
-{
-    MyMesh mesh;
-
-    // on construit une liste de sommets
-    MyMesh::VertexHandle sommets[8];
-
-
-
-    sommets[0] = mesh.add_vertex(MyMesh::Point(-1, -1,  1));
-    sommets[1] = mesh.add_vertex(MyMesh::Point( 1, -1,  1));
-    sommets[2] = mesh.add_vertex(MyMesh::Point( 1,  1,  1));
-    sommets[3] = mesh.add_vertex(MyMesh::Point(-1,  1,  1));
-    sommets[4] = mesh.add_vertex(MyMesh::Point(-1, -1, -1));
-    sommets[5] = mesh.add_vertex(MyMesh::Point( 1, -1, -1));
-    sommets[6] = mesh.add_vertex(MyMesh::Point( 1,  1, -1));
-    sommets[7] = mesh.add_vertex(MyMesh::Point(-1,  1, -1));
-
-
-    // on construit des faces à partir des sommets
-
-    std::vector<MyMesh::VertexHandle> uneNouvelleFace;
-
-    uneNouvelleFace.clear();
-    uneNouvelleFace.push_back(sommets[0]);
-    uneNouvelleFace.push_back(sommets[1]);
-    uneNouvelleFace.push_back(sommets[2]);
-    uneNouvelleFace.push_back(sommets[3]);
-    mesh.add_face(uneNouvelleFace);
-
-    uneNouvelleFace.clear();
-    uneNouvelleFace.push_back(sommets[7]);
-    uneNouvelleFace.push_back(sommets[6]);
-    uneNouvelleFace.push_back(sommets[5]);
-    uneNouvelleFace.push_back(sommets[4]);
-    mesh.add_face(uneNouvelleFace);
-
-    uneNouvelleFace.clear();
-    uneNouvelleFace.push_back(sommets[1]);
-    uneNouvelleFace.push_back(sommets[0]);
-    uneNouvelleFace.push_back(sommets[4]);
-    uneNouvelleFace.push_back(sommets[5]);
-    mesh.add_face(uneNouvelleFace);
-
-    uneNouvelleFace.clear();
-    uneNouvelleFace.push_back(sommets[2]);
-    uneNouvelleFace.push_back(sommets[1]);
-    uneNouvelleFace.push_back(sommets[5]);
-    uneNouvelleFace.push_back(sommets[6]);
-    mesh.add_face(uneNouvelleFace);
-
-    uneNouvelleFace.clear();
-    uneNouvelleFace.push_back(sommets[3]);
-    uneNouvelleFace.push_back(sommets[2]);
-    uneNouvelleFace.push_back(sommets[6]);
-    uneNouvelleFace.push_back(sommets[7]);
-    mesh.add_face(uneNouvelleFace);
-
-    uneNouvelleFace.clear();
-    uneNouvelleFace.push_back(sommets[0]);
-    uneNouvelleFace.push_back(sommets[3]);
-    uneNouvelleFace.push_back(sommets[7]);
-    uneNouvelleFace.push_back(sommets[4]);
-    mesh.add_face(uneNouvelleFace);
-
-    mesh.update_normals();
-
-    // initialisation des couleurs et épaisseurs (sommets et arêtes) du mesh
-    resetAllColorsAndThickness(&mesh);
-
-    // on affiche le maillage
-    displayMesh(&mesh);
 
 }
 

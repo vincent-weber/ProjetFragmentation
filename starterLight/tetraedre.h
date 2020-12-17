@@ -30,6 +30,8 @@ public:
 
     bool contientPoint(Point*);
     bool isPointInSphere(Point* p);
+
+    bool write_tetra_to_file(const std::string& filename, Tetraedre* tetra);
 };
 
 QDebug operator <<(QDebug os, const Tetraedre& t);
