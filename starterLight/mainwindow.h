@@ -6,6 +6,25 @@
 #include <OpenMesh/Core/IO/MeshIO.hh>
 #include <OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh>
 
+#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
+#include <CGAL/Polygon_mesh_processing/corefinement.h>
+
+#include <CGAL/Polygon_mesh_processing/repair.h>
+#include <CGAL/Polygon_mesh_processing/internal/repair_extra.h>
+
+#include <CGAL/Surface_mesh.h>
+#include <CGAL/Surface_mesh/Surface_mesh.h>
+
+typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
+typedef CGAL::Surface_mesh<K::Point_3> Mesh_CGAL;
+
+typedef Mesh_CGAL::Vertex_index vertex_descriptor;
+typedef Mesh_CGAL::Edge_index edge_descriptor;
+typedef Mesh_CGAL::Face_index face_descriptor;
+
+namespace PMP = CGAL::Polygon_mesh_processing;
+namespace params = CGAL::Polygon_mesh_processing::parameters;
+
 #include <stack>
 
 #include "point.h"
@@ -61,7 +80,9 @@ public:
     BoiteEnglobante boiteEnglobante(MyMesh *_mesh);
     VertexHandle* find_vertex(Point& p, std::vector<VertexHandle>& handles);
 
-    void write_tetras_to_file(std::vector<Tetraedre> tetras, std::string filename_pattern);
+    Mesh_CGAL convert_open_mesh_to_cgal(MyMesh& openmesh_mesh);
+    std::vector<Mesh_CGAL> convert_tetras_to_cgal(std::vector<Tetraedre>& tetras);
+    void write_tetras_to_file(std::vector<Tetraedre>& tetras, std::string filename_pattern);
     void tests();
 
 private slots:

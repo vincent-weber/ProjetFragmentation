@@ -19,11 +19,13 @@ public:
     unsigned flip23count = 0;
     unsigned flip32count = 0;
 
+    bool debug1 = false;
+
     std::stack<Point*> remaining_points;
     std::forward_list<Tetraedre*> tetraedres;
     std::vector<Tetraedre> tetras_debug;
     //scale_factor au moins 50 je dirais
-    float big_tetra_scale_factor = 500.0f;
+    float big_tetra_scale_factor = 80.0f;
 
     std::array<Point*,4> p_tetra_englob;
     unsigned tetra_count = 0;
@@ -39,6 +41,7 @@ public:
 
     Tetraedre* rand_tetra_not_visited(std::vector<Tetraedre*> visited_tetras);
     Tetraedre* tetra_containing_point_walk(Point* point);
+    bool isPointInCircumscribedSphere(Tetraedre* tetra, Point* p);
 
     //Flips standards
     std::array<Tetraedre*, 2> flip32(std::array<Tetraedre*, 3>);
@@ -47,6 +50,8 @@ public:
 
     //Flips pour cas degeneres
     std::array<Tetraedre*, 4> flip44(std::array<Tetraedre*, 4>);
+
+    void verifDelaunay(std::vector<Point*>& points);
 };
 
 #endif // TRIANGULATIONDELAUNAY_H

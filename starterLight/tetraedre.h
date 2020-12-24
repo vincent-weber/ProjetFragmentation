@@ -21,6 +21,8 @@ public:
 
     //Pour respecter critere boule vide
     Point circumsphere_center;
+    float circumsphere_radius;
+    void computeCircumCenter();
 
     //Pour l'algorithme walk il le faut apparemment
     Point insphere_center;

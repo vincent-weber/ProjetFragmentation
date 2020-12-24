@@ -55,7 +55,7 @@ VertexHandle* MainWindow::find_vertex(Point& p, std::vector<VertexHandle>& handl
     return nullptr;
 }
 
-void MainWindow::write_tetras_to_file(std::vector<Tetraedre> tetras, std::string filename_pattern) {
+void MainWindow::write_tetras_to_file(std::vector<Tetraedre>& tetras, std::string filename_pattern) {
     unsigned file_number = 0;
     std::vector<MyMesh> meshes_tetra;
     std::vector<VertexHandle> handles;
@@ -98,6 +98,114 @@ void MainWindow::write_tetras_to_file(std::vector<Tetraedre> tetras, std::string
     }
 }
 
+std::vector<Mesh_CGAL> MainWindow::convert_tetras_to_cgal(std::vector<Tetraedre>& tetras) {
+    qDebug() << "Starting converting tetras.";
+    std::vector<Mesh_CGAL> meshes_tetra;
+    std::vector<vertex_descriptor> handles;
+    for (Tetraedre& tetra : tetras) {
+        Mesh_CGAL mesh_tetra;
+        for (int i = 0 ; i < 4 ; ++i) {
+            vertex_descriptor vd = mesh_tetra.add_vertex(Mesh_CGAL::Point(tetra.points[i]->x,tetra.points[i]->y,tetra.points[i]->z));
+            handles.push_back(vd);
+        }
+        for (int i = 0 ; i < 4 ; ++i) {
+            bool is_ccw = tetra.orient_faces[i];
+            if (!is_ccw) {
+                mesh_tetra.add_face(handles[(i+1)%4], handles[i], handles[(i+2)%4]);
+            }
+            else {
+                mesh_tetra.add_face(handles[i], handles[(i+1)%4], handles[(i+2)%4]);
+            }
+        }
+        meshes_tetra.push_back(mesh_tetra);
+        handles.clear();
+    }
+    qDebug() << "Finished converting tetras.";
+    return meshes_tetra;
+}
+
+// Finds if the given point p is already present in the mesh.
+// If yes, returns the corresponding handle.
+// Else, add the point to the mesh and return the corresponding handle.
+vertex_descriptor find_or_add(Mesh_CGAL& mesh, Mesh_CGAL::Point p)
+{
+    Mesh_CGAL::Property_map<vertex_descriptor, K::Point_3> location = get(CGAL::vertex_point, mesh);
+    Mesh_CGAL::Vertex_range::iterator  vb, ve;
+    Mesh_CGAL::Vertex_range r = mesh.vertices();
+
+    vb = boost::begin(r);
+    vb = boost::end(r);
+
+    for(boost::tie(vb, ve) = mesh.vertices(); vb != ve && location[*vb] != p; ++vb);
+    if (vb != mesh.vertices_end())
+        return *vb;
+    else
+        return mesh.add_vertex(p);
+}
+
+Mesh_CGAL MainWindow::convert_open_mesh_to_cgal(MyMesh& openmesh_mesh) {
+    qDebug() << "Starting converting mesh to cgal";
+    Mesh_CGAL final_mesh_cgal;
+    for (MyMesh::FaceIter curFace = openmesh_mesh.faces_begin(); curFace != openmesh_mesh.faces_end(); curFace++) {
+        std::vector<vertex_descriptor> vertices_face;
+        vertices_face.reserve(3);
+        for (MyMesh::FaceVertexIter fv_iter = openmesh_mesh.cfv_iter(*curFace); fv_iter.is_valid() ; ++fv_iter) {
+            MyMesh::Point pom(openmesh_mesh.point(*fv_iter));
+            Mesh_CGAL::Point p(pom[0], pom[1], pom[2]);
+            vertices_face.emplace_back(find_or_add(final_mesh_cgal, p));
+        }
+        final_mesh_cgal.add_face(vertices_face[0], vertices_face[1], vertices_face[2]);
+    }
+    qDebug() << "Finished converting mesh to cgal";
+    return final_mesh_cgal;
+}
+
+Mesh_CGAL compute_intersection(Mesh_CGAL mesh_1, Mesh_CGAL mesh_2, bool debug_info = false) {
+    bool valid_intersection = PMP::corefine_and_compute_intersection(mesh_1, mesh_2, mesh_1, params::throw_on_self_intersection(false));
+    bool removed = false;
+    bool intersecting = false;
+
+    if (valid_intersection) {
+        intersecting = PMP::does_self_intersect(mesh_1, PMP::parameters::vertex_point_map(get(CGAL::vertex_point, mesh_1)));
+        if (intersecting) {
+            removed = PMP::remove_self_intersections(mesh_1);
+        }
+    }
+
+    if (debug_info) {
+        if (!valid_intersection) {
+            qDebug() << "Intersection failed.";
+            exit(0);
+        } else {
+            if (intersecting) {
+                qDebug() << (intersecting ? "There are self-intersections in Intersection." : "There is no self-intersection in Intersection.");
+                if (!removed) {
+                    qDebug() << "Self intersections not removed.";
+                } else {
+                    qDebug() << "Self intersections removed.";
+                }
+            }
+        }
+    }
+    return mesh_1;
+}
+
+bool save_mesh_cgal(Mesh_CGAL& mesh,std::string filename)
+{
+    // write mesh to output.obj
+    try
+    {
+        std::ofstream output(filename);
+        output << mesh;
+    }
+    catch( std::exception& x )
+    {
+        qDebug() << "Exception: " << x.what() << endl;
+        return false;
+    }
+    return true;
+}
+
 // exemple pour charger un fichier .obj
 void MainWindow::on_pushButton_chargement_clicked()
 {
@@ -114,14 +222,30 @@ void MainWindow::on_pushButton_chargement_clicked()
 
     srand(time(NULL));
 
-    BoiteEnglobante boite_englobante = boiteEnglobante(&mesh);
-    std::vector<Point*> points = genererPointsDansBoite(&mesh, boite_englobante, 4);
-    TriangulationDelaunay td(points, false);
+    //tests();exit(0);
 
+    BoiteEnglobante boite_englobante = boiteEnglobante(&mesh);
+    std::vector<Point*> points = genererPointsDansBoite(&mesh, boite_englobante, 10);
+    TriangulationDelaunay td(points, false);
+    //return;
     std::vector<Tetraedre> tetras_td;
     for (Tetraedre* tetra : td.tetraedres) {
         tetras_td.push_back(*tetra);
     }
+
+    Mesh_CGAL mesh_cgal = convert_open_mesh_to_cgal(mesh);
+    std::vector<Mesh_CGAL> tetras_cgal = convert_tetras_to_cgal(tetras_td);
+
+    std::string filename = "fragment";
+    unsigned cnt = 1;
+    qDebug() << "Starting computing fragments";
+    for (Mesh_CGAL& tetra_cgal : tetras_cgal) {
+        Mesh_CGAL mesh_intersect = compute_intersection(tetra_cgal, mesh_cgal, true);
+        save_mesh_cgal(mesh_intersect, "./" + filename + std::to_string(cnt++) + ".off");
+    }
+    qDebug() << "Finished computing fragments";
+
+    return;
 
     write_tetras_to_file(tetras_td, "tetra");
     write_tetras_to_file(td.tetras_debug, "tetra_debug");
@@ -135,13 +259,19 @@ void MainWindow::tests() {
     /*Point p1(1,1,1);
     Point p2(1,-1,-1);
     Point p3(-1,1,-1);
-    Point p4(-1,-1,1);
+    Point p4(-1,-1,1);*/
     Point p1(-1,0,0);
-    Point p2(0,0,0);
+    Point p2(1,0,0);
     Point p3(0,0,1);
     Point p4(0,1,0);
     Tetraedre tetra_test(&p1, &p2, &p3, &p4);
-    for (int i = 0 ; i < 4 ; ++i) {
+    std::vector<Point> points_tests;
+    points_tests.push_back(Point(0,-0.5,0.2)); //TRUE
+    points_tests.push_back(Point(0,-0.5,-0.2)); //FALSE
+    points_tests.push_back(Point(0.1,-10,0.1)); //TRUE
+    points_tests.push_back(Point(0.1,-10,-0.1)); //FALSE
+    points_tests.push_back(Point(0,-0.1,10)); //FALSE
+    /*for (int i = 0 ; i < 4 ; ++i) {
         qDebug() << "NORMALE " << i << " : " << tetra_test.normales[i].x << " - " << tetra_test.normales[i].y << " - " << tetra_test.normales[i].z;
     }
     qDebug() << "INSPHERE CENTER : " << tetra_test.insphere_center.x << " - " << tetra_test.insphere_center.y << " - " << tetra_test.insphere_center.z;*/
@@ -149,6 +279,31 @@ void MainWindow::tests() {
     NORMALE  1  :  1  -  0  -  0
     NORMALE  2  :  -1  -  1  -  1
     NORMALE  3  :  0  -  0  -  -1*/
+
+    for (Point point_test : points_tests) {
+        Vecteur vdir(point_test, p4);
+        qDebug() << intersect_droite_triangle(vdir, p4, p1,p2,p3);
+        /*Vecteur v_test(*tetra_test.points[0], point_test);
+        Vecteur v_test2(*tetra_test.points[1], point_test);
+        float dot1 = tetra_test.normales[0].dot_product(v_test);
+        float dot2 = tetra_test.normales[1].dot_product(v_test2);
+        float dot3 = tetra_test.normales[2].dot_product(v_test);
+        float dot4 = tetra_test.normales[3].dot_product(v_test);
+        if (dot1 < 0 && dot2 < 0 && dot3 < 0 && dot4 < 0) {
+            //qDebug() << "POINT DANS TETRAEDRE";
+        }
+        else {
+            //qDebug() << "POINT HORS TETRAEDRE";
+        }
+        if (tetra_test.isPointInSphere(&point_test)) {
+            //qDebug() << "POINT DANS SPHERE";
+        } else {
+            //qDebug() << "POINT HORS SPHERE";
+        }*/
+    }
+
+    qDebug() << "CENTRE CERCLE CIRONSCRIT LOL : " << tetra_test.circumsphere_center;
+
 
     /*MyMesh::Point p_1; p_1[0] = p1.x; p_1[1] = p1.y; p_1[2] = p1.z; VertexHandle vh1 = mesh.add_vertex(p_1);
     mesh.set_color(vh1, MyMesh::Color(0, 255, 0)); mesh.data(vh1).thickness = 10;
