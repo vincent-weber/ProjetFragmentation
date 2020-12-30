@@ -40,8 +40,60 @@ std::vector<Point*> genererPointsDansBoite(MyMesh *_mesh, BoiteEnglobante& boite
         p[2] = z;
         VertexHandle vh = _mesh->add_vertex(p);
         _mesh->set_color(vh, MyMesh::Color(0, 0, 255));
+        _mesh->data(vh).thickness = 5;
+    }
+    return points;
+}
+
+std::vector<Point*> genererPointsGrid(MyMesh *_mesh, BoiteEnglobante& boite, int size) {
+    std::vector<Point*> points;
+    float xSpace = (boite.maxX - boite.minX) / (size - 1);
+    float ySpace = (boite.maxY - boite.minY) / (size - 1);
+    float zSpace = (boite.maxZ - boite.minZ) / (size - 1);
+
+    for (int x = 0 ; x < size ; x++) {
+        for (int y = 0 ; y < size ; y++){
+            for (int z = 0 ; z < size ; z++){
+                float newX = boite.minX + xSpace * x;
+                float newY = boite.minY + ySpace * y;
+                float newZ = boite.minZ + zSpace * z;
+                Point* p_pile = new Point(newX,newY,newZ);
+                points.push_back(p_pile);
+
+
+                MyMesh::Point p;
+                p[0] = newX;
+                p[1] = newY;
+                p[2] = newZ;
+                VertexHandle vh = _mesh->add_vertex(p);
+                _mesh->set_color(vh, MyMesh::Color(0, 0, 255));
+                _mesh->data(vh).thickness = 5;
+            }
+        }
+    }
+    return points;
+}
+
+std::vector<Point*> genererPointsImpact(MyMesh *_mesh, BoiteEnglobante& boite, int nb_points, int idPoint) {
+    std::vector<Point*> points;
+
+    for (int i = 0 ; i < nb_points ; ++i) {
+        float x = rand_float_between_two_values(boite.minX, boite.maxX);
+        float y = rand_float_between_two_values(boite.minY, boite.maxY);
+        float z = rand_float_between_two_values(boite.minZ, boite.maxZ);
+
+        Point* p_pile = new Point(x,y,z);
+        points.push_back(p_pile);
+
+        MyMesh::Point p;
+        p[0] = x;
+        p[1] = y;
+        p[2] = z;
+        VertexHandle vh = _mesh->add_vertex(p);
+        _mesh->set_color(vh, MyMesh::Color(0, 0, 255));
         _mesh->data(vh).thickness = 10;
     }
+
     return points;
 }
 
@@ -224,8 +276,7 @@ void MainWindow::on_pushButton_chargement_clicked()
 
     //tests();exit(0);
 
-    BoiteEnglobante boite_englobante = boiteEnglobante(&mesh);
-    std::vector<Point*> points = genererPointsDansBoite(&mesh, boite_englobante, 10);
+ /*   std::vector<Point*> points = genererPointsDansBoite(&mesh, boite_englobante, 10);
     TriangulationDelaunay td(points, false);
     //return;
     std::vector<Tetraedre> tetras_td;
@@ -249,9 +300,10 @@ void MainWindow::on_pushButton_chargement_clicked()
 
     write_tetras_to_file(tetras_td, "tetra");
     write_tetras_to_file(td.tetras_debug, "tetra_debug");
+*/
 
     // on affiche le maillage
-    //displayMesh(&mesh);
+    displayMesh(&mesh);
 }
 
 void MainWindow::tests() {
@@ -553,3 +605,100 @@ MainWindow::~MainWindow()
 }
 
 
+
+
+
+
+void MainWindow::on_pushButtonFragmentation_clicked()
+{
+    qDebug() << "Fragmentation enclenchée";
+
+    TriangulationDelaunay td(listSeeds, false);
+    //return;
+    std::vector<Tetraedre> tetras_td;
+    for (Tetraedre* tetra : td.tetraedres) {
+        tetras_td.push_back(*tetra);
+    }
+
+    Mesh_CGAL mesh_cgal = convert_open_mesh_to_cgal(mesh);
+    std::vector<Mesh_CGAL> tetras_cgal = convert_tetras_to_cgal(tetras_td);
+
+    std::string filename = "fragment";
+    unsigned cnt = 1;
+    qDebug() << "Starting computing fragments";
+    for (Mesh_CGAL& tetra_cgal : tetras_cgal) {
+        Mesh_CGAL mesh_intersect = compute_intersection(tetra_cgal, mesh_cgal, true);
+        save_mesh_cgal(mesh_intersect, "./" + filename + std::to_string(cnt++) + ".off");
+    }
+    qDebug() << "Finished computing fragments";
+
+    return;
+
+    write_tetras_to_file(tetras_td, "tetra");
+    write_tetras_to_file(td.tetras_debug, "tetra_debug");
+
+    qDebug() << "Fragmentation terminée";
+}
+
+void MainWindow::on_spinBoxSeeds_valueChanged(int arg1)
+{
+    nbSeeds = arg1;
+    qDebug() << "nb seeds = " << nbSeeds;
+}
+
+
+void MainWindow::on_spinBoxPointImpact_valueChanged(int arg1)
+{
+    if(arg1 < (int)mesh.n_vertices()){
+        idPointImpact = arg1;
+        resetAllColorsAndThickness(&mesh);
+        mesh.set_color(mesh.vertex_handle(idPointImpact), MyMesh::Color(255,0,0));
+        mesh.data(mesh.vertex_handle(idPointImpact)).thickness = 5;
+        qDebug() << "id point = " << idPointImpact;
+        displayMesh(&mesh);
+    }
+}
+
+void MainWindow::on_spinBoxGridSize_valueChanged(int arg1)
+{
+    gridSize = arg1;
+    displayMesh(&mesh);
+    qDebug() << "grid size = " << gridSize;
+}
+
+void MainWindow::deletesSeeds(){
+    qDebug() << "nb Points avant " << mesh.n_vertices();
+    for(int i = 1; i <= listSeeds.size(); i++){
+        mesh.delete_vertex(mesh.vertex_handle(mesh.n_vertices()-i), false);
+    }
+    mesh.garbage_collection();
+    listSeeds.clear();
+    qDebug() << "nb Points après " << mesh.n_vertices();
+}
+
+void MainWindow::on_pushButtonRandom_clicked()
+{
+    deletesSeeds();
+    BoiteEnglobante boite_englobante = boiteEnglobante(&mesh);
+    listSeeds = genererPointsDansBoite(&mesh, boite_englobante, nbSeeds);
+    displayMesh(&mesh);
+    qDebug() << "Points générés " << listSeeds.size();
+}
+
+void MainWindow::on_pushButtonImpact_clicked()
+{
+    deletesSeeds();
+    BoiteEnglobante boite_englobante = boiteEnglobante(&mesh);
+    listSeeds = genererPointsImpact(&mesh, boite_englobante, nbSeeds, idPointImpact);
+    displayMesh(&mesh);
+    qDebug() << "Points générés " << listSeeds.size();
+}
+
+void MainWindow::on_pushButtonGrid_clicked()
+{
+    deletesSeeds();
+    BoiteEnglobante boite_englobante = boiteEnglobante(&mesh);
+    listSeeds = genererPointsGrid(&mesh, boite_englobante, gridSize);
+    displayMesh(&mesh);
+    qDebug() << "Points générés " << listSeeds.size();
+}

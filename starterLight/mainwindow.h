@@ -71,6 +71,10 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
+    std::vector<Point*> listSeeds;
+    int nbSeeds = 10;
+    int gridSize = 5;
+    int idPointImpact = 0;
 
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
@@ -79,6 +83,7 @@ public:
     void resetAllColorsAndThickness(MyMesh* _mesh);
     BoiteEnglobante boiteEnglobante(MyMesh *_mesh);
     VertexHandle* find_vertex(Point& p, std::vector<VertexHandle>& handles);
+    void deletesSeeds();
 
     Mesh_CGAL convert_open_mesh_to_cgal(MyMesh& openmesh_mesh);
     std::vector<Mesh_CGAL> convert_tetras_to_cgal(std::vector<Tetraedre>& tetras);
@@ -87,6 +92,15 @@ public:
 
 private slots:
     void on_pushButton_chargement_clicked();
+    void on_pushButtonFragmentation_clicked();
+
+    void on_spinBoxSeeds_valueChanged(int arg1);
+    void on_spinBoxPointImpact_valueChanged(int arg1);
+    void on_spinBoxGridSize_valueChanged(int arg1);
+
+    void on_pushButtonRandom_clicked();
+    void on_pushButtonImpact_clicked();
+    void on_pushButtonGrid_clicked();
 
 private:
 
