@@ -54,9 +54,9 @@ std::vector<Point*> genererPointsGrid(MyMesh *_mesh, BoiteEnglobante& boite, int
     for (int x = 0 ; x < size ; x++) {
         for (int y = 0 ; y < size ; y++){
             for (int z = 0 ; z < size ; z++){
-                float newX = boite.minX + xSpace * x + rand_float_between_two_values(-0.005, 0.005);
-                float newY = boite.minY + ySpace * y + rand_float_between_two_values(-0.005, 0.005);
-                float newZ = boite.minZ + zSpace * z + rand_float_between_two_values(-0.005, 0.005);
+                float newX = boite.minX + xSpace * x + rand_float_between_two_values(-0.01, 0.01);
+                float newY = boite.minY + ySpace * y + rand_float_between_two_values(-0.01, 0.01);
+                float newZ = boite.minZ + zSpace * z + rand_float_between_two_values(-0.01, 0.01);
                 Point* p_pile = new Point(newX,newY,newZ);
                 points.push_back(p_pile);
 
@@ -74,10 +74,16 @@ std::vector<Point*> genererPointsGrid(MyMesh *_mesh, BoiteEnglobante& boite, int
     return points;
 }
 
+/*float distanceEuclidienne(QVector3D pA, QVector3D pB){
+    return (float) sqrt(pow(pA.x()-pB.x(), 2) + pow(pA.y()-pB.y(), 2));
+}*/
+
 std::vector<Point*> genererPointsImpact(MyMesh *_mesh, BoiteEnglobante& boite, int nb_points, int idPoint) {
     std::vector<Point*> points;
     float xDistMax = 0, yDistMax = 0, zDistMax = 0;
-    //float _mesh->vertex_handle(idPoint)[0];
+    MyMesh::Point point = _mesh->point(_mesh->vertex_handle(idPoint));
+
+
 
     for (int i = 0 ; i < nb_points ; ++i) {
         float x = rand_float_between_two_values(boite.minX, boite.maxX);
@@ -229,7 +235,7 @@ Mesh_CGAL compute_intersection(Mesh_CGAL mesh_1, Mesh_CGAL mesh_2, bool debug_in
     if (debug_info) {
         if (!valid_intersection) {
             qDebug() << "Intersection failed.";
-            exit(0);
+            //exit(0);
         } else {
             if (intersecting) {
                 qDebug() << (intersecting ? "There are self-intersections in Intersection." : "There is no self-intersection in Intersection.");
