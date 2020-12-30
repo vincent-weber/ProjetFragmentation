@@ -54,9 +54,9 @@ std::vector<Point*> genererPointsGrid(MyMesh *_mesh, BoiteEnglobante& boite, int
     for (int x = 0 ; x < size ; x++) {
         for (int y = 0 ; y < size ; y++){
             for (int z = 0 ; z < size ; z++){
-                float newX = boite.minX + xSpace * x;
-                float newY = boite.minY + ySpace * y;
-                float newZ = boite.minZ + zSpace * z;
+                float newX = boite.minX + xSpace * x + rand_float_between_two_values(-0.005, 0.005);
+                float newY = boite.minY + ySpace * y + rand_float_between_two_values(-0.005, 0.005);
+                float newZ = boite.minZ + zSpace * z + rand_float_between_two_values(-0.005, 0.005);
                 Point* p_pile = new Point(newX,newY,newZ);
                 points.push_back(p_pile);
 
@@ -76,6 +76,8 @@ std::vector<Point*> genererPointsGrid(MyMesh *_mesh, BoiteEnglobante& boite, int
 
 std::vector<Point*> genererPointsImpact(MyMesh *_mesh, BoiteEnglobante& boite, int nb_points, int idPoint) {
     std::vector<Point*> points;
+    float xDistMax = 0, yDistMax = 0, zDistMax = 0;
+    //float _mesh->vertex_handle(idPoint)[0];
 
     for (int i = 0 ; i < nb_points ; ++i) {
         float x = rand_float_between_two_values(boite.minX, boite.maxX);
