@@ -74,32 +74,39 @@ std::vector<Point*> genererPointsGrid(MyMesh *_mesh, BoiteEnglobante& boite, int
     return points;
 }
 
-/*float distanceEuclidienne(QVector3D pA, QVector3D pB){
-    return (float) sqrt(pow(pA.x()-pB.x(), 2) + pow(pA.y()-pB.y(), 2));
-}*/
+float distanceEuclidienne(MyMesh::Point pA, MyMesh::Point pB){
+    return (float) sqrt(pow(pA[0]-pB[0], 2) + pow(pA[1]-pB[1], 2) + pow(pA[2]-pB[2], 2));
+}
 
 std::vector<Point*> genererPointsImpact(MyMesh *_mesh, BoiteEnglobante& boite, int nb_points, int idPoint) {
     std::vector<Point*> points;
-    float xDistMax = 0, yDistMax = 0, zDistMax = 0;
-    MyMesh::Point point = _mesh->point(_mesh->vertex_handle(idPoint));
-
-
+    MyMesh::Point impact = _mesh->point(_mesh->vertex_handle(idPoint));
+    float xDistMax = std::max(sqrt(pow(impact[0]-boite.maxX, 2)), sqrt(pow(impact[0]-boite.minX, 2)));
+    float pasX = xDistMax / nb_points;
+    float yDistMax = std::max(sqrt(pow(impact[1]-boite.maxY, 2)), sqrt(pow(impact[1]-boite.minY, 2)));
+    float pasY = yDistMax / nb_points;
+    float zDistMax = std::max(sqrt(pow(impact[2]-boite.maxZ, 2)), sqrt(pow(impact[2]-boite.minZ, 2)));
+    float pasZ = zDistMax / nb_points;
 
     for (int i = 0 ; i < nb_points ; ++i) {
-        float x = rand_float_between_two_values(boite.minX, boite.maxX);
-        float y = rand_float_between_two_values(boite.minY, boite.maxY);
-        float z = rand_float_between_two_values(boite.minZ, boite.maxZ);
+        float x = rand_float_between_two_values(impact[0]-(pasX*(i+1)), impact[0]+(pasX*(i+1)));
+        float y = rand_float_between_two_values(impact[1]-(pasY*(i+1)), impact[1]+(pasY*(i+1)));
+        float z = rand_float_between_two_values(impact[2]-(pasZ*(i+1)), impact[2]+(pasZ*(i+1)));
 
-        Point* p_pile = new Point(x,y,z);
-        points.push_back(p_pile);
+        if (x > boite.minX && y > boite.minY && z > boite.minZ && x < boite.maxX && y < boite.maxY && z < boite.maxZ){
+            Point* p_pile = new Point(x,y,z);
+            points.push_back(p_pile);
 
-        MyMesh::Point p;
-        p[0] = x;
-        p[1] = y;
-        p[2] = z;
-        VertexHandle vh = _mesh->add_vertex(p);
-        _mesh->set_color(vh, MyMesh::Color(0, 0, 255));
-        _mesh->data(vh).thickness = 10;
+            MyMesh::Point p;
+            p[0] = x;
+            p[1] = y;
+            p[2] = z;
+            VertexHandle vh = _mesh->add_vertex(p);
+            _mesh->set_color(vh, MyMesh::Color(0, 0, 255));
+            _mesh->data(vh).thickness = 10;
+        } else {
+            i--;
+        }
     }
 
     return points;
