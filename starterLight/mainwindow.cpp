@@ -291,32 +291,6 @@ void MainWindow::on_pushButton_chargement_clicked()
 
     //tests();exit(0);
 
- /*   std::vector<Point*> points = genererPointsDansBoite(&mesh, boite_englobante, 10);
-    TriangulationDelaunay td(points, false);
-    //return;
-    std::vector<Tetraedre> tetras_td;
-    for (Tetraedre* tetra : td.tetraedres) {
-        tetras_td.push_back(*tetra);
-    }
-
-    Mesh_CGAL mesh_cgal = convert_open_mesh_to_cgal(mesh);
-    std::vector<Mesh_CGAL> tetras_cgal = convert_tetras_to_cgal(tetras_td);
-
-    std::string filename = "fragment";
-    unsigned cnt = 1;
-    qDebug() << "Starting computing fragments";
-    for (Mesh_CGAL& tetra_cgal : tetras_cgal) {
-        Mesh_CGAL mesh_intersect = compute_intersection(tetra_cgal, mesh_cgal, true);
-        save_mesh_cgal(mesh_intersect, "./" + filename + std::to_string(cnt++) + ".off");
-    }
-    qDebug() << "Finished computing fragments";
-
-    return;
-
-    write_tetras_to_file(tetras_td, "tetra");
-    write_tetras_to_file(td.tetras_debug, "tetra_debug");
-*/
-
     // on affiche le maillage
     displayMesh(&mesh);
 }
@@ -619,15 +593,8 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-
-
-
-
-
 void MainWindow::on_pushButtonFragmentation_clicked()
 {
-    qDebug() << "Fragmentation enclenchée";
-
     TriangulationDelaunay td(listSeeds, false);
     //return;
     std::vector<Tetraedre> tetras_td;
@@ -651,14 +618,11 @@ void MainWindow::on_pushButtonFragmentation_clicked()
 
     write_tetras_to_file(tetras_td, "tetra");
     write_tetras_to_file(td.tetras_debug, "tetra_debug");
-
-    qDebug() << "Fragmentation terminée";
 }
 
 void MainWindow::on_spinBoxSeeds_valueChanged(int arg1)
 {
     nbSeeds = arg1;
-    qDebug() << "nb seeds = " << nbSeeds;
 }
 
 
@@ -669,7 +633,6 @@ void MainWindow::on_spinBoxPointImpact_valueChanged(int arg1)
         resetAllColorsAndThickness(&mesh);
         mesh.set_color(mesh.vertex_handle(idPointImpact), MyMesh::Color(255,0,0));
         mesh.data(mesh.vertex_handle(idPointImpact)).thickness = 5;
-        qDebug() << "id point = " << idPointImpact;
         displayMesh(&mesh);
     }
 }
@@ -678,17 +641,14 @@ void MainWindow::on_spinBoxGridSize_valueChanged(int arg1)
 {
     gridSize = arg1;
     displayMesh(&mesh);
-    qDebug() << "grid size = " << gridSize;
 }
 
 void MainWindow::deletesSeeds(){
-    qDebug() << "nb Points avant " << mesh.n_vertices();
     for(int i = 1; i <= listSeeds.size(); i++){
         mesh.delete_vertex(mesh.vertex_handle(mesh.n_vertices()-i), false);
     }
     mesh.garbage_collection();
     listSeeds.clear();
-    qDebug() << "nb Points après " << mesh.n_vertices();
 }
 
 void MainWindow::on_pushButtonRandom_clicked()
@@ -697,7 +657,6 @@ void MainWindow::on_pushButtonRandom_clicked()
     BoiteEnglobante boite_englobante = boiteEnglobante(&mesh);
     listSeeds = genererPointsDansBoite(&mesh, boite_englobante, nbSeeds);
     displayMesh(&mesh);
-    qDebug() << "Points générés " << listSeeds.size();
 }
 
 void MainWindow::on_pushButtonImpact_clicked()
@@ -706,7 +665,6 @@ void MainWindow::on_pushButtonImpact_clicked()
     BoiteEnglobante boite_englobante = boiteEnglobante(&mesh);
     listSeeds = genererPointsImpact(&mesh, boite_englobante, nbSeeds, idPointImpact);
     displayMesh(&mesh);
-    qDebug() << "Points générés " << listSeeds.size();
 }
 
 void MainWindow::on_pushButtonGrid_clicked()
@@ -715,5 +673,4 @@ void MainWindow::on_pushButtonGrid_clicked()
     BoiteEnglobante boite_englobante = boiteEnglobante(&mesh);
     listSeeds = genererPointsGrid(&mesh, boite_englobante, gridSize);
     displayMesh(&mesh);
-    qDebug() << "Points générés " << listSeeds.size();
 }
