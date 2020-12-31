@@ -644,7 +644,7 @@ void MainWindow::on_spinBoxGridSize_valueChanged(int arg1)
 }
 
 void MainWindow::deletesSeeds(){
-    for(int i = 1; i <= listSeeds.size(); i++){
+    for(int i = 1; i <= (int)listSeeds.size(); i++){
         mesh.delete_vertex(mesh.vertex_handle(mesh.n_vertices()-i), false);
     }
     mesh.garbage_collection();
