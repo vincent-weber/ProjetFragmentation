@@ -212,11 +212,7 @@ bool Tetraedre::isPointInSphere(Point* p){
     orientMatrixDebug.push_back(cO);
     orientMatrixDebug.push_back(dO);
 
-    qDebug() << "DOIT ETRE POSITIF : " << calcDeterminant(orientMatrixDebug);
-
-
     float detInSphere = calcDeterminant(inSphereMatrix);
-    qDebug() << "DET IN SPHERE : " << detInSphere;
     if(detInSphere > 0)
         return true;
     else

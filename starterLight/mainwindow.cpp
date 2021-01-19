@@ -191,9 +191,9 @@ std::vector<Mesh_CGAL> MainWindow::convert_tetras_to_cgal(std::vector<Tetraedre>
     return meshes_tetra;
 }
 
-// Finds if the given point p is already present in the mesh.
-// If yes, returns the corresponding handle.
-// Else, add the point to the mesh and return the corresponding handle.
+// Cherche si le point p est deja present dans le mesh
+// Si oui, retourne le handle correspondant
+// Sinon, ajoute le point et retourne le nouveau handle
 vertex_descriptor find_or_add(Mesh_CGAL& mesh, Mesh_CGAL::Point p)
 {
     Mesh_CGAL::Property_map<vertex_descriptor, K::Point_3> location = get(CGAL::vertex_point, mesh);
@@ -293,85 +293,6 @@ void MainWindow::on_pushButton_chargement_clicked()
 
     // on affiche le maillage
     displayMesh(&mesh);
-}
-
-void MainWindow::tests() {
-
-    /*Point p1(1,1,1);
-    Point p2(1,-1,-1);
-    Point p3(-1,1,-1);
-    Point p4(-1,-1,1);*/
-    Point p1(-1,0,0);
-    Point p2(1,0,0);
-    Point p3(0,0,1);
-    Point p4(0,1,0);
-    Tetraedre tetra_test(&p1, &p2, &p3, &p4);
-    std::vector<Point> points_tests;
-    points_tests.push_back(Point(0,-0.5,0.2)); //TRUE
-    points_tests.push_back(Point(0,-0.5,-0.2)); //FALSE
-    points_tests.push_back(Point(0.1,-10,0.1)); //TRUE
-    points_tests.push_back(Point(0.1,-10,-0.1)); //FALSE
-    points_tests.push_back(Point(0,-0.1,10)); //FALSE
-    /*for (int i = 0 ; i < 4 ; ++i) {
-        qDebug() << "NORMALE " << i << " : " << tetra_test.normales[i].x << " - " << tetra_test.normales[i].y << " - " << tetra_test.normales[i].z;
-    }
-    qDebug() << "INSPHERE CENTER : " << tetra_test.insphere_center.x << " - " << tetra_test.insphere_center.y << " - " << tetra_test.insphere_center.z;*/
-    /*NORMALE  0  :  0  -  -1  -  0
-    NORMALE  1  :  1  -  0  -  0
-    NORMALE  2  :  -1  -  1  -  1
-    NORMALE  3  :  0  -  0  -  -1*/
-
-    for (Point point_test : points_tests) {
-        Vecteur vdir(point_test, p4);
-        qDebug() << intersect_droite_triangle(vdir, p4, p1,p2,p3);
-        /*Vecteur v_test(*tetra_test.points[0], point_test);
-        Vecteur v_test2(*tetra_test.points[1], point_test);
-        float dot1 = tetra_test.normales[0].dot_product(v_test);
-        float dot2 = tetra_test.normales[1].dot_product(v_test2);
-        float dot3 = tetra_test.normales[2].dot_product(v_test);
-        float dot4 = tetra_test.normales[3].dot_product(v_test);
-        if (dot1 < 0 && dot2 < 0 && dot3 < 0 && dot4 < 0) {
-            //qDebug() << "POINT DANS TETRAEDRE";
-        }
-        else {
-            //qDebug() << "POINT HORS TETRAEDRE";
-        }
-        if (tetra_test.isPointInSphere(&point_test)) {
-            //qDebug() << "POINT DANS SPHERE";
-        } else {
-            //qDebug() << "POINT HORS SPHERE";
-        }*/
-    }
-
-    qDebug() << "CENTRE CERCLE CIRONSCRIT LOL : " << tetra_test.circumsphere_center;
-
-
-    /*MyMesh::Point p_1; p_1[0] = p1.x; p_1[1] = p1.y; p_1[2] = p1.z; VertexHandle vh1 = mesh.add_vertex(p_1);
-    mesh.set_color(vh1, MyMesh::Color(0, 255, 0)); mesh.data(vh1).thickness = 10;
-    MyMesh::Point p_2; p_2[0] = p2.x; p_2[1] = p2.y; p_2[2] = p2.z; VertexHandle vh2 = mesh.add_vertex(p_2);
-    mesh.set_color(vh2, MyMesh::Color(0, 255, 0)); mesh.data(vh2).thickness = 10;
-    MyMesh::Point p_3; p_3[0] = p3.x; p_3[1] = p3.y; p_3[2] = p3.z; VertexHandle vh3 = mesh.add_vertex(p_3);
-    mesh.set_color(vh3, MyMesh::Color(0, 255, 0)); mesh.data(vh3).thickness = 10;
-    MyMesh::Point p_4; p_4[0] = p4.x; p_4[1] = p4.y; p_4[2] = p4.z; VertexHandle vh4 = mesh.add_vertex(p_4);
-    mesh.set_color(vh4, MyMesh::Color(0, 255, 0)); mesh.data(vh4).thickness = 10;
-
-    MyMesh::Point ps; ps[0] = tetra_test.insphere_center.x; ps[1] = tetra_test.insphere_center.y; ps[2] = tetra_test.insphere_center.z;
-    VertexHandle vhs = mesh.add_vertex(ps);
-    mesh.set_color(vhs, MyMesh::Color(0, 0, 255)); mesh.data(vhs).thickness = 10;
-
-    displayMesh(&mesh);
-    return;*/
-
-    /*Point pb(1, 1, 1);
-    Point pc(1,-1,-1);
-    Point pd(-1,1,-1);
-    Point pe(-1,-1,1);
-    Tetraedre tetra2(&pc, &pb, &pe, &pd);
-    Point ptest(3,0,0);
-    qDebug() << "TEST IS POINT IN SPHERE";
-    qDebug() << tetra2.isPointInSphere(&ptest);
-    return;*/
-
 }
 
 /* **** fin de la partie boutons et IHM **** */
@@ -616,6 +537,7 @@ void MainWindow::on_pushButtonFragmentation_clicked()
 
     return;
 
+    //code pour debug les tetras
     write_tetras_to_file(tetras_td, "tetra");
     write_tetras_to_file(td.tetras_debug, "tetra_debug");
 }

@@ -50,8 +50,6 @@ public:
 
     //Flips pour cas degeneres
     std::array<Tetraedre*, 4> flip44(std::array<Tetraedre*, 4>);
-
-    void verifDelaunay(std::vector<Point*>& points);
 };
 
 #endif // TRIANGULATIONDELAUNAY_H
