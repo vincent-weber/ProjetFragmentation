@@ -23,6 +23,7 @@ float rand_float_between_two_values(float a, float b) {
     return (b-a) * r + a;
 }
 
+// génère nb_points points placés aléatoirement dans la boite englobante
 std::vector<Point*> genererPointsDansBoite(MyMesh *_mesh, BoiteEnglobante& boite, int nb_points) {
 
     std::vector<Point*> points;
@@ -45,6 +46,7 @@ std::vector<Point*> genererPointsDansBoite(MyMesh *_mesh, BoiteEnglobante& boite
     return points;
 }
 
+// génère une grille de size * size * size
 std::vector<Point*> genererPointsGrid(MyMesh *_mesh, BoiteEnglobante& boite, int size) {
     std::vector<Point*> points;
     float xSpace = (boite.maxX - boite.minX) / (size - 1);
@@ -54,6 +56,8 @@ std::vector<Point*> genererPointsGrid(MyMesh *_mesh, BoiteEnglobante& boite, int
     for (int x = 0 ; x < size ; x++) {
         for (int y = 0 ; y < size ; y++){
             for (int z = 0 ; z < size ; z++){
+                /* on ajoute un très petit nombre aléatoire afin que les points ne soient pas parfaitement aligné
+                pour ne pas tomber dans un cas particulier*/
                 float newX = boite.minX + xSpace * x + rand_float_between_two_values(-0.01, 0.01);
                 float newY = boite.minY + ySpace * y + rand_float_between_two_values(-0.01, 0.01);
                 float newZ = boite.minZ + zSpace * z + rand_float_between_two_values(-0.01, 0.01);
@@ -74,13 +78,17 @@ std::vector<Point*> genererPointsGrid(MyMesh *_mesh, BoiteEnglobante& boite, int
     return points;
 }
 
+// calcul la distance euclidienne entre 2 points
 float distanceEuclidienne(MyMesh::Point pA, MyMesh::Point pB){
     return (float) sqrt(pow(pA[0]-pB[0], 2) + pow(pA[1]-pB[1], 2) + pow(pA[2]-pB[2], 2));
 }
 
+// génère nb_points seeds placés aléatoirement autour du point d'id idPoint avec plus de probabilité de se trouver proche du point
 std::vector<Point*> genererPointsImpact(MyMesh *_mesh, BoiteEnglobante& boite, int nb_points, int idPoint) {
     std::vector<Point*> points;
     MyMesh::Point impact = _mesh->point(_mesh->vertex_handle(idPoint));
+
+    // calcul de la distance max des seeds par rapport au point d'impact
     float xDistMax = std::max(sqrt(pow(impact[0]-boite.maxX, 2)), sqrt(pow(impact[0]-boite.minX, 2)));
     float pasX = xDistMax / nb_points;
     float yDistMax = std::max(sqrt(pow(impact[1]-boite.maxY, 2)), sqrt(pow(impact[1]-boite.minY, 2)));
@@ -88,6 +96,7 @@ std::vector<Point*> genererPointsImpact(MyMesh *_mesh, BoiteEnglobante& boite, i
     float zDistMax = std::max(sqrt(pow(impact[2]-boite.maxZ, 2)), sqrt(pow(impact[2]-boite.minZ, 2)));
     float pasZ = zDistMax / nb_points;
 
+    // Chaque point a la possibilité de se trouver un peu plus loin du point d'impact que le précédent
     for (int i = 0 ; i < nb_points ; ++i) {
         float x = rand_float_between_two_values(impact[0]-(pasX*(i+1)), impact[0]+(pasX*(i+1)));
         float y = rand_float_between_two_values(impact[1]-(pasY*(i+1)), impact[1]+(pasY*(i+1)));
@@ -565,6 +574,7 @@ void MainWindow::on_spinBoxGridSize_valueChanged(int arg1)
     displayMesh(&mesh);
 }
 
+// détruit toutes les seeds
 void MainWindow::deletesSeeds(){
     for(int i = 1; i <= (int)listSeeds.size(); i++){
         mesh.delete_vertex(mesh.vertex_handle(mesh.n_vertices()-i), false);
@@ -573,6 +583,7 @@ void MainWindow::deletesSeeds(){
     listSeeds.clear();
 }
 
+//Lance la génération aléatoire de seeds
 void MainWindow::on_pushButtonRandom_clicked()
 {
     deletesSeeds();
@@ -581,6 +592,7 @@ void MainWindow::on_pushButtonRandom_clicked()
     displayMesh(&mesh);
 }
 
+//Lance la génération autour du point d'impact
 void MainWindow::on_pushButtonImpact_clicked()
 {
     deletesSeeds();
@@ -589,6 +601,7 @@ void MainWindow::on_pushButtonImpact_clicked()
     displayMesh(&mesh);
 }
 
+//Lance la génération aléatoire de seeds en forme de grille
 void MainWindow::on_pushButtonGrid_clicked()
 {
     deletesSeeds();
